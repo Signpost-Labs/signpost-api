@@ -24,9 +24,23 @@ RUN npm ci --omit=dev --ignore-scripts
 # ─── Stage 2: Runtime ────────────────────────────────────────────────────────
 FROM node:22-alpine AS runtime
 
-# Re-declare ARG so the value is available in this stage, then bake it into
-# the image as an ENV so the running container can read it via process.env.
+# Build arguments for OCI annotations and runtime environment
 ARG GIT_COMMIT=unknown
+ARG VERSION=1.0.0
+ARG BUILD_DATE=""
+ARG SOURCE=https://github.com/scout-off/scout-off-backend
+ARG TITLE="scout-off-backend"
+ARG DESCRIPTION="Backend API for ScoutOff — decentralized football scouting platform on Stellar"
+ARG LICENSES="Apache-2.0"
+
+# OCI Image Spec annotations (https://github.com/opencontainers/image-spec/blob/main/annotations.md)
+LABEL org.opencontainers.image.title="${TITLE}" \
+      org.opencontainers.image.description="${DESCRIPTION}" \
+      org.opencontainers.image.source="${SOURCE}" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.created="${BUILD_DATE}" \
+      org.opencontainers.image.licenses="${LICENSES}"
 
 # Non-root user for least-privilege runtime
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

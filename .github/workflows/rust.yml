@@ -14,7 +14,9 @@ jobs:
       - name: Set up Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.81.0
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:

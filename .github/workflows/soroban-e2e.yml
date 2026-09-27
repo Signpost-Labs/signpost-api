@@ -33,7 +33,9 @@ jobs:
       - name: Install Rust (wasm32)
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.81.0
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
 
       - name: Install Stellar CLI
         run: |

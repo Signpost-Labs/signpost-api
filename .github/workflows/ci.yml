@@ -289,10 +289,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image with GIT_COMMIT build arg
+      - name: Build Docker image with OCI build args
         run: |
+          BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          VERSION=$(node -p "require('./package.json').version")
           docker build \
             --build-arg GIT_COMMIT=${{ github.sha }} \
+            --build-arg VERSION="${VERSION}" \
+            --build-arg BUILD_DATE="${BUILD_DATE}" \
             --tag scout-off-backend:ci \
             .
 
@@ -305,6 +309,34 @@ jobs:
             node -e "console.log(process.env.GIT_COMMIT)")
           echo "GIT_COMMIT in image: $commit"
           test "$commit" = "${{ github.sha }}"
+
+      - name: Verify OCI labels are set in the image
+        run: |
+          docker inspect scout-off-backend:ci --format '{{json .Config.Labels}}'
+          source=$(docker inspect scout-off-backend:ci --format '{{index .Config.Labels "org.opencontainers.image.source"}}')
+          revision=$(docker inspect scout-off-backend:ci --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')
+          version=$(docker inspect scout-off-backend:ci --format '{{index .Config.Labels "org.opencontainers.image.version"}}')
+          created=$(docker inspect scout-off-backend:ci --format '{{index .Config.Labels "org.opencontainers.image.created"}}')
+          title=$(docker inspect scout-off-backend:ci --format '{{index .Config.Labels "org.opencontainers.image.title"}}')
+          description=$(docker inspect scout-off-backend:ci --format '{{index .Config.Labels "org.opencontainers.image.description"}}')
+          licenses=$(docker inspect scout-off-backend:ci --format '{{index .Config.Labels "org.opencontainers.image.licenses"}}')
+
+          echo "Labels:"
+          echo "  source: $source"
+          echo "  revision: $revision"
+          echo "  version: $version"
+          echo "  created: $created"
+          echo "  title: $title"
+          echo "  description: $description"
+          echo "  licenses: $licenses"
+
+          test "$source" = "https://github.com/scout-off/scout-off-backend"
+          test "$revision" = "${{ github.sha }}"
+          test -n "$version"
+          test -n "$created"
+          test "$title" = "scout-off-backend"
+          test -n "$description"
+          test -n "$licenses"
   contracts:
     name: Soroban Contracts
     runs-on: ubuntu-latest
@@ -316,7 +348,9 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.81.0
           targets: wasm32-unknown-unknown
+          components: rustfmt, clippy
 
       - name: Cache Cargo registry
         uses: actions/cache@v4
