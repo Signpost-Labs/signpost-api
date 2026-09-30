@@ -41,6 +41,7 @@ Response codes:
 | Status | Meaning                                                                 |
 | ------ | ----------------------------------------------------------------------- |
 | `200`  | Stream opened; frames start arriving                                    |
+| `400`  | Invalid `eventType` filter (`{ success: false, error, code: "VALIDATION_ERROR", validEventTypes }`) |
 | `401`  | Missing or invalid token (`{ success: false, error }`)                  |
 | `403`  | Wallet is blocklisted — stream access revoked (`code: WALLET_BLOCKLISTED`) |
 | `429`  | Per-wallet stream limit reached (`SSE_MAX_CONNECTIONS_PER_WALLET`)       |
@@ -98,7 +99,7 @@ further on top of it.
 
 | Parameter   | Type   | Behaviour                                                                                                                              |
 | ----------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `eventType` | string | Subscribe to a single event type, e.g. `?eventType=milestone_approved`. Omitted = receive all event types that pass the relevance filter. Unknown values are ignored. |
+| `eventType` | string | Subscribe to one or more event types as a comma-separated list, e.g. `?eventType=milestone_approved,contact_unlocked`. Omitted = receive all event types that pass the relevance filter. Unknown values are rejected with `400`. |
 | `playerId`  | string | Only deliver events whose payload contains this player identifier. Omitted = no additional player-level narrowing.                       |
 
 Examples:
@@ -106,6 +107,9 @@ Examples:
 ```text
 # Only my milestone approvals
 GET /api/events/stream?eventType=milestone_approved
+
+# Multiple types (comma-separated)
+GET /api/events/stream?eventType=milestone_approved,contact_unlocked
 
 # Only events about one player (any type)
 GET /api/events/stream?playerId=player-001
@@ -127,8 +131,30 @@ Filterable `eventType` values (validated against this exact list):
 > **Note:** the stream can also carry `player_deactivated`, `player_reactivated`,
 > `trial_offer_accepted`, and `trial_offer_rejected` frames (they pass the
 > relevance filter), but those types are **not** currently accepted as
-> `eventType` filter values — an unknown filter value is silently ignored, so a
-> filter for them behaves like no filter at all.
+> `eventType` filter values — requesting one returns `400` with the list of
+> valid types in `validEventTypes`.
+
+### Invalid `eventType`
+
+If any requested value is not in the valid list above, the request is rejected
+with `400` **before** the stream opens:
+
+```json
+{
+  "success": false,
+  "error": "Unknown eventType: 'milestone_aproved'",
+  "code": "VALIDATION_ERROR",
+  "validEventTypes": [
+    "player_registered",
+    "milestone_submitted",
+    "milestone_approved",
+    "scout_subscribed",
+    "contact_unlocked",
+    "trial_offer_logged",
+    "fees_withdrawn"
+  ]
+}
+```
 
 ## Frame format
 
@@ -189,6 +215,7 @@ self-documenting and future-proof.
 The two filter layers compose with **AND** semantics:
 
 1. `isEventRelevantToWallet` — wallet isolation, always enforced.
+2. `isEventMatchingFilter` — the optional `eventType`
 2. `isEventMatchingFilter` — the optional `eventType` / `playerId` narrowing.
 
 A `playerId` filter matches if any payload field that carries a player identity

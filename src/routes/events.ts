@@ -113,6 +113,35 @@ const VALID_EVENT_TYPES = new Set<ContractEventType>([
   'fees_withdrawn',
 ]);
 
+/**
+ * Parse and validate the `eventType` query parameter.
+ *
+ * Accepts a single type or a comma-separated list (e.g.
+ * `?eventType=milestone_approved,scout_subscribed`). Values are split on
+ * `,`, trimmed, and deduped. Returns the set of requested types, or an
+ * error listing the valid types when any value is unknown.
+ */
+function parseEventTypes(raw: string | undefined):
+  | { ok: true; types: Set<ContractEventType> }
+  | { ok: false; invalid: string[] } {
+  const types = new Set<ContractEventType>();
+  if (raw === undefined) return { ok: true, types };
+
+  const invalid: string[] = [];
+  for (const part of raw.split(',')) {
+    const value = part.trim();
+    if (value === '') continue;
+    if (VALID_EVENT_TYPES.has(value as ContractEventType)) {
+      types.add(value as ContractEventType);
+    } else if (!invalid.includes(value)) {
+      invalid.push(value);
+    }
+  }
+
+  if (invalid.length > 0) return { ok: false, invalid };
+  return { ok: true, types };
+}
+
 // ─── SSE frame helpers ───────────────────────────────────────────────────────
 
 /**
@@ -221,9 +250,11 @@ export function isAcceptingSseSessions(): boolean { return _acceptingSseSessions
  * Authentication: Bearer JWT (same as all other protected routes).
  *
  * Query parameters (all optional, combinable):
- *   - eventType  One event type name to subscribe to (e.g. "milestone_approved").
- *                When omitted the client receives all event types that pass the
- *                wallet-relevance filter.  Unknown values are ignored.
+ *   - eventType  One or more event type names to subscribe to, comma-separated
+ *                (e.g. "milestone_approved" or
+ *                "milestone_approved,scout_subscribed"). When omitted the
+ *                client receives all event types that pass the
+ *                wallet-relevance filter. Unknown values are rejected with 400.
  *   - playerId   Only deliver events whose payload contains this player identifier.
  *                When omitted no additional player-level filtering is applied.
  *
@@ -266,6 +297,7 @@ export function isAcceptingSseSessions(): boolean { return _acceptingSseSessions
  *
  * @auth Bearer token required (any role)
  * @response 200 text/event-stream — long-lived SSE connection
+ * @response 400 { success: false, error: string, code: string, validEventTypes: string[] } — unknown eventType
  * @response 401 { success: false, error: string } — missing or invalid token
  * @response 403 { success: false, error: string, code: 'WALLET_BLOCKLISTED' } — wallet is blocklisted
  * @response 429 { success: false, error: string } — per-wallet connection limit reached
@@ -309,6 +341,13 @@ router.get('/stream', requireAuth, async (req: Request, res: Response) => {
   const rawEventType = req.query.eventType as string | undefined;
   const rawPlayerId = req.query.playerId as string | undefined;
 
+  const parsedEventTypes = parseEventTypes(rawEventType);
+  if (!parsedEventTypes.ok) {
+    res.status(400).json({
+      success: false,
+      error: `Unknown eventType value(s): ${parsedEventTypes.invalid.join(', ')}`,
+      code: 'VALIDATION_ERROR',
+      validEventTypes: Array.from(VALID_EVENT_TYPES),
   const eventTypes = new Set<ContractEventType>();
   if (rawEventType && VALID_EVENT_TYPES.has(rawEventType as ContractEventType)) {
     eventTypes.add(rawEventType as ContractEventType);
@@ -402,13 +441,10 @@ router.get('/stream', requireAuth, async (req: Request, res: Response) => {
     const unsubscribeRevoked = tokenBlocklistModule.onTokenRevoked((jti: string) => {
       if (jti === session.jti) session.terminate('token_revoked');
     });
-    cleanupFns.push(unsubscribeRevoked);
+    return;
   }
-  const unsubscribeBlocked = onWalletBlocked((blockedWallet: string) => {
-    if (blockedWallet === session.wallet) session.terminate('wallet_blocklisted');
-  });
-  cleanupFns.push(unsubscribeBlocked);
 
+  const eventTypes = parsedEventTypes.types;
   // ── Keep-alive ─────────────────────────────────────────────────────────────
   keepAliveTimer = setInterval(() => {
     // Check if the response is still writable before writing.
@@ -457,4 +493,4 @@ router.get('/stream', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-export default router;
+  /* … truncated 4318 chars — edit only what you need near the top … */
