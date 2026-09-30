@@ -296,10 +296,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image with GIT_COMMIT build arg
+      - name: Build Docker image with OCI build args
         run: |
+          BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          VERSION=$(node -p "require('./package.json').version")
           docker build \
             --build-arg GIT_COMMIT=${{ github.sha }} \
+            --build-arg VERSION="${VERSION}" \
+            --build-arg BUILD_DATE="${BUILD_DATE}" \
             --tag scout-off-backend:ci \
             .
 
@@ -404,6 +408,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
+          toolchain: 1.81.0
           targets: wasm32-unknown-unknown
           components: clippy, rustfmt
 
