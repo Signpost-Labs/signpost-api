@@ -25,8 +25,11 @@ COPY src ./src
 RUN npm run build
 
 # Prune dev dependencies so only production deps are copied to runtime stage.
-# Keep HUSKY=0 to skip the prepare hook in the pruned install.
-RUN HUSKY=0 npm ci --omit=dev
+# `npm prune` rather than a second `npm ci --omit=dev`: a fresh install re-runs
+# the root `prepare` script (`husky`), which fails with "husky: not found"
+# because husky is a dev dependency. Pruning runs no lifecycle scripts and
+# keeps the better-sqlite3 binary already compiled above.
+RUN npm prune --omit=dev
 
 # ─── Stage 2: Runtime ────────────────────────────────────────────────────────
 FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS runtime
@@ -49,8 +52,12 @@ LABEL org.opencontainers.image.title="${TITLE}" \
       org.opencontainers.image.created="${BUILD_DATE}" \
       org.opencontainers.image.licenses="${LICENSES}"
 
-# Non-root user for least-privilege runtime
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+# Non-root user for least-privilege runtime. The app runs as `node dist/index.js`
+# and never needs npm at runtime, so drop the npm/npx bundled with the base
+# image: it is unused attack surface and the source of every HIGH finding in
+# the CI Trivy scan (vulnerable copies of brace-expansion, picomatch, etc.).
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
 WORKDIR /app
 
