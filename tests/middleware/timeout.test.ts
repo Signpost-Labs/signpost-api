@@ -21,6 +21,7 @@ function makeReqRes() {
       listeners[event] = listeners[event] ?? [];
       listeners[event].push(cb);
     },
+    setHeader() { return this; },
     status(code: number) { statusCode = code; return this; },
     json(data: unknown) { body = data; _headersSent = true; return this; },
     emit(event: string) { (listeners[event] ?? []).forEach(cb => cb()); },
@@ -34,7 +35,10 @@ function makeReqRes() {
     _getBody: () => unknown;
   };
 
-  const req = {} as Request;
+  const req = {
+    on() { return this; },
+    removeListener() { return this; },
+  } as unknown as Request;
   const next = jest.fn() as NextFunction;
   return { req, res, next };
 }

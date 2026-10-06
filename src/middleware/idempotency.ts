@@ -58,21 +58,21 @@ export interface IdempotencyOptions {
  */
 export function idempotency(req: Request, res: Response, next: NextFunction): void;
 export function idempotency(
-  options: IdempotencyOptions,
+  options?: IdempotencyOptions,
 ): (req: Request, res: Response, next: NextFunction) => void;
 export function idempotency(
-  reqOrOptions: Request | IdempotencyOptions,
+  reqOrOptions?: Request | IdempotencyOptions,
   res?: Response,
   next?: NextFunction,
 ): void | ((req: Request, res: Response, next: NextFunction) => void) {
   // Plain middleware usage: idempotency(req, res, next).
-  if (typeof (reqOrOptions as Request).params === 'object') {
+  if (typeof (reqOrOptions as Request | undefined)?.params === 'object') {
     handleIdempotency(reqOrOptions as Request, res as Response, next as NextFunction, undefined).catch(next as NextFunction);
     return;
   }
 
   // Factory usage: idempotency({ requestFingerprint }).
-  const options = reqOrOptions as IdempotencyOptions;
+  const options = reqOrOptions as IdempotencyOptions | undefined;
   return (req: Request, res: Response, next: NextFunction): void => {
     handleIdempotency(req, res, next, options).catch(next);
   };
@@ -211,8 +211,10 @@ async function handleIdempotency(
 
   // Intercept res.json to persist the response and resolve the in-flight promise.
   const originalJson = res.json.bind(res);
+  let jsonCalled = false;
 
   res.json = function (body: unknown): Response {
+    jsonCalled = true;
     // Persist the response before sending; ignore errors (best-effort). This
     // stays fire-and-forget rather than awaited: res.json must return
     // synchronously to preserve Express's response contract. Wrapped in
@@ -235,15 +237,21 @@ async function handleIdempotency(
   (res as unknown as { end: (...args: unknown[]) => Response }).end = function (
     ...args: unknown[]
   ): Response {
-    // If res.json was never called, release the pending claim so the key
-    // becomes reusable immediately instead of waiting for the lease to expire.
-    releaseIdempotencyKey(trimmedKey)
-      .then(() => logger.info(`[idempotency] claim_released key=${trimmedKey}`))
-      .catch((err: unknown) =>
-        logger.warn(`[idempotency] claim_release_error key=${trimmedKey} err=${(err as Error).message}`),
-      );
-    // Reject the in-flight promise so waiters get a 409 instead of hanging.
-    rejectInFlight(new Error('response ended without res.json'));
+    // Express's res.json() itself calls res.end(), so only release when json
+    // was never called; otherwise this would race updateIdempotencyRecord()
+    // and could delete the record before it is marked completed.
+    if (!jsonCalled) {
+      // Release the pending claim so the key becomes reusable immediately
+      // instead of waiting for the lease to expire. Wrapped in
+      // Promise.resolve() for the same reason as updateIdempotencyRecord above.
+      Promise.resolve(releaseIdempotencyKey(trimmedKey))
+        .then(() => logger.info(`[idempotency] claim_released key=${trimmedKey}`))
+        .catch((err: unknown) =>
+          logger.warn(`[idempotency] claim_release_error key=${trimmedKey} err=${(err as Error).message}`),
+        );
+      // Reject the in-flight promise so waiters get a 409 instead of hanging.
+      rejectInFlight(new Error('response ended without res.json'));
+    }
     return originalEnd(...args);
   };
 

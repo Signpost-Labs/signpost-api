@@ -1,7 +1,7 @@
-import { buildChallenge, extractAccount, verifyChallenge } from '../../src/services/sep10';
+import { buildChallenge, extractAccount, getServerKeypair, verifyChallenge } from '../../src/services/sep10';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
-import { Keypair, Transaction, Networks, TransactionBuilder, BASE_FEE, Operation, Account, Asset } from '@stellar/stellar-sdk';
+import { Keypair, Transaction, Networks, TransactionBuilder, BASE_FEE, Operation, Account, Asset, TimeoutInfinite } from '@stellar/stellar-sdk';
 
 const clientKeypair = Keypair.random();
 
@@ -50,9 +50,9 @@ describe('sep10', () => {
   });
 
   it('verifyChallenge throws when server signature is absent', () => {
-    // Build a valid-looking challenge from a rogue server (not our SERVER_KEYPAIR)
+    // Build a challenge sourced by our server account but signed by a rogue key
     const rogueKeypair = Keypair.random();
-    const rogueAccount = new Account(rogueKeypair.publicKey(), '-1');
+    const rogueAccount = new Account(getServerKeypair().publicKey(), '-1');
     const tx = new TransactionBuilder(rogueAccount, {
       fee: BASE_FEE,
       networkPassphrase: Networks.TESTNET,
@@ -106,7 +106,7 @@ describe('sep10', () => {
 
     it('throws when challenge sequence number is not 0', () => {
       // Build a valid challenge but manually set sequence to a non-zero value
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '123'); // Non-zero sequence
       const tx = new TransactionBuilder(serverAccount, {
         fee: BASE_FEE,
@@ -130,7 +130,7 @@ describe('sep10', () => {
     });
 
     it('throws when challenge has no time bounds', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       // TimeBounds are required by the SDK when using setTimeout, so we build
       // a tx without any timeout operation and then manually remove them
@@ -146,23 +146,18 @@ describe('sep10', () => {
           })
         );
 
-      // Build without timeout (no time bounds)
-      const tx = txBuilder.build();
-      // Force set timeBounds to undefined to simulate missing time bounds
-      // (The SDK v16+ may always have timeBounds even without setTimeout)
-      // We'll instead use a very long timeout and then test minTime in future
+      // TimeoutInfinite yields timeBounds of 0/0, which the verifier treats as missing
+      const tx = txBuilder.setTimeout(TimeoutInfinite).build();
 
       tx.sign(serverKeypair);
       tx.sign(clientKeypair);
       const xdr = tx.toXdr();
 
-      // Since the SDK always adds timeBounds, we test the "minTime in future" case instead
-      // This test verifies the "no time bounds" case cannot be achieved through normal means
-      // because the SDK enforces it. We'll skip this specific test for now.
+      expect(() => verifyChallenge(xdr)).toThrow('Challenge must have time bounds');
     });
 
     it('throws when challenge minTime is in the future (beyond grace window)', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       // Create a challenge with minTime far in the future
       const now = Math.floor(Date.now() / 1000);
@@ -195,7 +190,7 @@ describe('sep10', () => {
     });
 
     it('throws when challenge has an extra operation from client account', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       const tx = new TransactionBuilder(serverAccount, {
         fee: BASE_FEE,
@@ -227,7 +222,7 @@ describe('sep10', () => {
     });
 
     it('accepts valid challenge with server-sourced extra operation', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       const tx = new TransactionBuilder(serverAccount, {
         fee: BASE_FEE,
@@ -259,7 +254,7 @@ describe('sep10', () => {
     });
 
     it('throws when challenge has no operations', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       const tx = new TransactionBuilder(serverAccount, {
         fee: BASE_FEE,
@@ -276,7 +271,7 @@ describe('sep10', () => {
     });
 
     it('throws when first operation is not manageData', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       const tx = new TransactionBuilder(serverAccount, {
         fee: BASE_FEE,
@@ -297,11 +292,11 @@ describe('sep10', () => {
       tx.sign(clientKeypair);
       const xdr = tx.toXdr();
 
-      expect(() => verifyChallenge(xdr)).toThrow('Invalid challenge: expected manageData operation');
+      expect(() => verifyChallenge(xdr)).toThrow('Invalid challenge: operation 0 must be manageData');
     });
 
     it('throws when operation name does not match "scoutoff auth"', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       const tx = new TransactionBuilder(serverAccount, {
         fee: BASE_FEE,
@@ -325,7 +320,7 @@ describe('sep10', () => {
     });
 
     it('throws when nonce value is missing', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       const tx = new TransactionBuilder(serverAccount, {
         fee: BASE_FEE,
@@ -349,7 +344,7 @@ describe('sep10', () => {
     });
 
     it('throws when nonce is not exactly 64 bytes (decoded)', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       const tx = new TransactionBuilder(serverAccount, {
         fee: BASE_FEE,
@@ -373,7 +368,7 @@ describe('sep10', () => {
     });
 
     it('throws when operation source is missing', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       const tx = new TransactionBuilder(serverAccount, {
         fee: BASE_FEE,
@@ -442,7 +437,7 @@ describe('sep10', () => {
     });
 
     it('rejects challenge with operation type other than manageData', () => {
-      const serverKeypair = Keypair.random();
+      const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       const tx = new TransactionBuilder(serverAccount, {
         fee: BASE_FEE,
@@ -611,7 +606,8 @@ describe('sep10', () => {
 
       // Instance B (different random keypair) must reject it — proving that
       // sharing the secret is the only way to make cross-instance auth work.
-      expect(() => instanceB.verifyChallenge(signedXdr)).toThrow('Challenge not signed by server');
+      // The challenge is sourced by A's server account, so B rejects it there.
+      expect(() => instanceB.verifyChallenge(signedXdr)).toThrow('Challenge source account is not the server account');
     });
   });
 });

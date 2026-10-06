@@ -348,10 +348,10 @@ router.get('/stream', requireAuth, async (req: Request, res: Response) => {
       error: `Unknown eventType value(s): ${parsedEventTypes.invalid.join(', ')}`,
       code: 'VALIDATION_ERROR',
       validEventTypes: Array.from(VALID_EVENT_TYPES),
-  const eventTypes = new Set<ContractEventType>();
-  if (rawEventType && VALID_EVENT_TYPES.has(rawEventType as ContractEventType)) {
-    eventTypes.add(rawEventType as ContractEventType);
+    });
+    return;
   }
+  const eventTypes = parsedEventTypes.types;
 
   const filter: SseFilterCriteria | undefined =
     eventTypes.size > 0 || rawPlayerId !== undefined
@@ -441,10 +441,13 @@ router.get('/stream', requireAuth, async (req: Request, res: Response) => {
     const unsubscribeRevoked = tokenBlocklistModule.onTokenRevoked((jti: string) => {
       if (jti === session.jti) session.terminate('token_revoked');
     });
-    return;
+    cleanupFns.push(unsubscribeRevoked);
   }
+  const unsubscribeBlocked = onWalletBlocked((blockedWallet: string) => {
+    if (blockedWallet === session.wallet) session.terminate('wallet_blocklisted');
+  });
+  cleanupFns.push(unsubscribeBlocked);
 
-  const eventTypes = parsedEventTypes.types;
   // ── Keep-alive ─────────────────────────────────────────────────────────────
   keepAliveTimer = setInterval(() => {
     // Check if the response is still writable before writing.
@@ -493,4 +496,4 @@ router.get('/stream', requireAuth, async (req: Request, res: Response) => {
   }
 });
 
-  /* … truncated 4318 chars — edit only what you need near the top … */
+export default router;

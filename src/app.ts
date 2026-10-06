@@ -216,9 +216,11 @@ app.use(helmet({
 }));
 app.use(securityHeaders);
 app.use(responseTime);
-// Set API-Version (canonical) and X-API-Version (deprecated alias) on every response
-app.use(apiVersion);
+// versionRouting records the API-Version request-header override, so it must
+// run before apiVersion, which reads it to set API-Version (canonical) and
+// X-API-Version (deprecated alias) on every response.
 app.use(versionRouting);
+app.use(apiVersion);
 // Configure Express body parser with per-route JSON payload size limits.
 // Upload endpoints (player registration, milestone evidence) accept larger payloads.
 // Auth endpoints are restricted to prevent DoS via large JWT bodies.

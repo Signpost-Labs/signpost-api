@@ -179,12 +179,17 @@ export function verifyChallenge(xdr: string): { account: string } {
 
   // 3. Verify time bounds are present and valid
   // SEP-10 requires timeBounds to be present; reject missing time bounds
+  // The SDK reports bounds as strings, so an unbounded (TimeoutInfinite)
+  // challenge shows up as maxTime '0' rather than a falsy value.
   if (!tx.timeBounds || !tx.timeBounds.minTime || !tx.timeBounds.maxTime) {
     throw new Error('Challenge must have time bounds');
   }
 
   const minTime = Number(tx.timeBounds.minTime);
   const maxTime = Number(tx.timeBounds.maxTime);
+  if (maxTime === 0) {
+    throw new Error('Challenge must have time bounds');
+  }
   const now = Math.floor(Date.now() / 1000);
 
   // minTime must not be in the future (with a small grace window for clock skew)

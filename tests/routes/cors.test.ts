@@ -15,6 +15,7 @@ describe('CORS origin allowlist', () => {
   });
 
   const originalNodeEnv = process.env.NODE_ENV;
+  const originalJwtSecret = process.env.JWT_SECRET;
 
   beforeEach(() => {
     jest.resetModules();
@@ -25,6 +26,8 @@ describe('CORS origin allowlist', () => {
     process.env.ADMIN_WALLET = 'GADMINWALLET1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
     process.env.PLATFORM_SECRET_KEY = 'SPLATFORMSECRETKEY1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
     process.env.SEP10_SERVER_SECRET = 'SAHWESRQAKN33CWRZ5AEZW2QYGD2XHOS4HL6CEEH775SXYFZDTD33TMA';
+    // Placeholder secrets like 'test-secret' are rejected outside dev/test.
+    process.env.JWT_SECRET = 'k8Zq3vN1pW7xR4tY9bM2cF6hJ0lD5sGaQe';
   });
 
   afterEach(() => {
@@ -37,6 +40,7 @@ describe('CORS origin allowlist', () => {
     // config.ts's env-conditional branches; it must be restored so later
     // test files in the same --runInBand process see the correct 'test' env.
     process.env.NODE_ENV = originalNodeEnv;
+    process.env.JWT_SECRET = originalJwtSecret;
   });
 
   it('allows requests from an origin allowed via CORS_ALLOWED_ORIGINS', async () => {

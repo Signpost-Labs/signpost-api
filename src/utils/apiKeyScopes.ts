@@ -62,9 +62,8 @@ export type ApiKeyScope = (typeof API_KEY_SCOPE_VOCABULARY)[number];
 export const LEGACY_DEFAULT_API_KEY_SCOPES: readonly string[] = [
   'read:players',
   'read:milestones',
+  'write:contacts',
   'read:subscription',
-  'read:contacts',
-  'read:trial_offers',
 ];
 
 /**

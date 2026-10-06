@@ -23,7 +23,7 @@ declare module 'react' {
 
   export type ReactElement = JSX.Element;
 
-  export interface FC<P = {}> {
+  export interface FC<P = object> {
     (props: P, context?: any): ReactElement | null;
     displayName?: string;
   }

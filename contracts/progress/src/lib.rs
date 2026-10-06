@@ -1,13 +1,13 @@
 #![no_std]
 
-use soroban_sdk::{
-    contract, contractimpl, contracttype, vec, Address, Env, IntoVal, String, Symbol, Vec,
-};
 use scout_off_shared::{
     errors::Error,
     storage::{
-        bump_instance, is_initialized, is_paused, set_initialized, set_paused, Page, MAX_PAGE_SIZE,
+        bump_instance, is_initialized, is_paused, set_initialized, set_paused, MAX_PAGE_SIZE,
     },
+};
+use soroban_sdk::{
+    contract, contractimpl, contracttype, vec, Address, Env, IntoVal, String, Symbol, Vec,
 };
 
 // ---------------------------------------------------------------------------
@@ -23,6 +23,16 @@ pub struct MilestoneData {
     pub validator: Address,
     pub approved: bool,
     pub submitted_at: u64,
+}
+
+/// A page of `MilestoneData` results; `next` is the start index of the following
+/// page, or `None` when this is the last one. `#[contracttype]` does not
+/// support generics, so each contract defines its own concrete page type.
+#[contracttype]
+#[derive(Clone)]
+pub struct MilestonePage {
+    pub items: Vec<MilestoneData>,
+    pub next: Option<u32>,
 }
 
 #[contracttype]
@@ -288,11 +298,7 @@ impl ProgressContract {
     /// * [`Error::InvalidInput`] — No milestone exists with the given `milestone_id`, or
     ///   the milestone type is not `"identity"` or `"performance"`.
     /// * [`Error::AlreadyVerified`] — The milestone has already been approved.
-    pub fn approve_milestone(
-        env: Env,
-        validator: Address,
-        milestone_id: u64,
-    ) -> Result<(), Error> {
+    pub fn approve_milestone(env: Env, validator: Address, milestone_id: u64) -> Result<(), Error> {
         if !is_initialized(&env) {
             return Err(Error::NotInitialized);
         }
@@ -343,7 +349,11 @@ impl ProgressContract {
         env.invoke_contract::<()>(
             &reg_addr,
             &Symbol::new(&env, "update_progress_level"),
-            vec![&env, milestone.player_id.into_val(&env), new_level.into_val(&env)],
+            vec![
+                &env,
+                milestone.player_id.into_val(&env),
+                new_level.into_val(&env),
+            ],
         );
 
         env.events().publish(
@@ -393,21 +403,21 @@ impl ProgressContract {
     }
 
     /// Return a page of milestone data for a player.
-    /// 
+    ///
     /// This is the paginated variant of [`get_milestones`]. It returns at most `limit` milestones
-    /// starting from the given `start` index. Use `next` in the returned [`Page`] to fetch
+    /// starting from the given `start` index. Use `next` in the returned [`MilestonePage`] to fetch
     /// subsequent pages until it is `None`.
-    /// 
+    ///
     /// # Arguments
     /// * `player_id` - The unique player identifier whose milestones to retrieve.
     /// * `start` - Zero-based index of the first milestone to return
     /// * `limit` - Maximum number of milestones to return (capped at MAX_PAGE_SIZE = 50)
-    /// 
+    ///
     /// # Returns
-    /// A [`Page<MilestoneData>`] containing:
+    /// A [`MilestonePage`] containing:
     /// * `items`: The slice of milestones for this page
     /// * `next`: The start index for the next page, or `None` if no more results
-    /// 
+    ///
     /// # Errors
     /// * [`Error::InvalidInput`] — `start` or `limit` is invalid
     pub fn get_milestones_page(
@@ -415,30 +425,33 @@ impl ProgressContract {
         player_id: u64,
         start: u32,
         limit: u32,
-    ) -> Result<Page<MilestoneData>, Error> {
+    ) -> Result<MilestonePage, Error> {
         // Validate inputs
         if limit == 0 {
             return Err(Error::InvalidInput);
         }
         let max_limit = MAX_PAGE_SIZE;
         let effective_limit = limit.min(max_limit);
-        
+
         let milestone_ids: Vec<u64> = env
             .storage()
             .instance()
             .get(&DataKey::PlayerMilestones(player_id))
             .unwrap_or_else(|| Vec::new(&env));
 
-        let total = milestone_ids.len() as u32;
+        let total = milestone_ids.len();
         if start >= total {
-            return Ok(Page { items: Vec::new(&env), next: None });
+            return Ok(MilestonePage {
+                items: Vec::new(&env),
+                next: None,
+            });
         }
 
         let end = (start + effective_limit).min(total);
-        
+
         let mut results = Vec::new(&env);
         for i in start..end {
-            let mid = milestone_ids.get_unchecked(i as usize);
+            let mid = milestone_ids.get_unchecked(i);
             if let Some(data) = env
                 .storage()
                 .instance()
@@ -447,10 +460,13 @@ impl ProgressContract {
                 results.push_back(data);
             }
         }
-        
+
         let next = if end < total { Some(end) } else { None };
-        
-        Ok(Page { items: results, next })
+
+        Ok(MilestonePage {
+            items: results,
+            next,
+        })
     }
 }
 
@@ -461,8 +477,8 @@ impl ProgressContract {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use soroban_sdk::{testutils::Address as _, Env};
     use register::{RegisterContract, RegisterContractClient};
+    use soroban_sdk::{testutils::Address as _, Env};
 
     fn setup(
         env: &Env,
@@ -679,7 +695,7 @@ mod tests {
 
         prog.register_validator(&validator);
 
-        let mut state = 0xc0ffee_1234u64;
+        let mut state = 0x00c0_ffee_1234_u64;
         for _step in 0..24 {
             let milestone_type = if state % 2 == 0 {
                 String::from_str(&env, "identity")
@@ -705,7 +721,10 @@ mod tests {
             let milestone = milestones.get(milestones.len() - 1).unwrap();
 
             if approval_result.is_ok() {
-                assert!(milestone.approved, "approval should flip the milestone state");
+                assert!(
+                    milestone.approved,
+                    "approval should flip the milestone state"
+                );
                 let after_level = reg.get_player(&player_id).progress_level;
                 assert!(
                     after_level >= before_level,
@@ -714,7 +733,10 @@ mod tests {
                 let second_result = prog.try_approve_milestone(&validator, &milestone_id);
                 assert!(second_result.is_err(), "double approval must fail");
             } else {
-                assert!(!milestone.approved, "failed approval must not approve the milestone");
+                assert!(
+                    !milestone.approved,
+                    "failed approval must not approve the milestone"
+                );
             }
 
             state = state
@@ -743,10 +765,17 @@ mod tests {
 
             let milestones = prog.get_milestones(&player_id);
             if result.is_ok() {
-                assert!(milestones.len() >= previous_len, "milestone count should never shrink");
+                assert!(
+                    milestones.len() >= previous_len,
+                    "milestone count should never shrink"
+                );
                 previous_len = milestones.len();
             } else {
-                assert_eq!(milestones.len(), previous_len, "failed submission must not add milestones");
+                assert_eq!(
+                    milestones.len(),
+                    previous_len,
+                    "failed submission must not add milestones"
+                );
             }
 
             state = state

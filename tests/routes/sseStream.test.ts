@@ -25,6 +25,14 @@ import app from '../../src/app';
 import { EventBroadcaster, broadcaster, BroadcastEvent } from '../../src/services/eventBroadcaster';
 import { getSseRetryMs } from '../../src/routes/events';
 
+// The stream resolves the connecting wallet's player (cuid2) and matches
+// player-scoped events on payload.player_id. These tests broadcast payloads
+// keyed by wallet, so map each wallet to a player whose ID is that wallet.
+jest.mock('../../src/db', () => ({
+  ...jest.requireActual('../../src/db'),
+  getPlayerByWallet: jest.fn(async (wallet: string) => ({ player_id: wallet, wallet })),
+}));
+
 const SECRET = process.env.JWT_SECRET ?? 'test-secret';
 
 // ─── Test wallets ─────────────────────────────────────────────────────────────

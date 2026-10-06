@@ -63,6 +63,11 @@ components:
         maxLength: 56
       description: Stellar public key (G…)
   schemas:
+    ErrorCode:
+      type: string
+      description: Machine-readable error code returned in API responses.
+      enum:
+        - REQUEST_TIMEOUT
     SuccessEnvelope:
       type: object
       required:
@@ -1751,6 +1756,28 @@ paths:
         '500':
           description: '{ success: false, error: string } - Spec file missing or unparsable'
       security: []
+  /docs/swagger-ui-bundle.js:
+    get:
+      tags:
+        - docs
+      summary: Serves the Swagger UI JavaScript bundle from swagger-ui-dist for the /ui page.
+      operationId: getDocsSwagger-ui-bundle.js
+      description: Serves the Swagger UI JavaScript bundle from swagger-ui-dist for the /ui page.
+      responses:
+        '200':
+          description: Swagger UI JavaScript bundle (text/javascript)
+      security: []
+  /docs/swagger-ui.css:
+    get:
+      tags:
+        - docs
+      summary: Serves the Swagger UI stylesheet from swagger-ui-dist for the /ui page.
+      operationId: getDocsSwagger-ui.css
+      description: Serves the Swagger UI stylesheet from swagger-ui-dist for the /ui page.
+      responses:
+        '200':
+          description: Swagger UI stylesheet (text/css)
+      security: []
   /docs/ui:
     get:
       tags:
@@ -1793,9 +1820,11 @@ paths:
         Authentication: Bearer JWT (same as all other protected routes).
 
         Query parameters (all optional, combinable):
-          - eventType  One event type name to subscribe to (e.g. "milestone_approved").
-                       When omitted the client receives all event types that pass the
-                       wallet-relevance filter.  Unknown values are ignored.
+          - eventType  One or more event type names to subscribe to, comma-separated
+                       (e.g. "milestone_approved" or
+                       "milestone_approved,scout_subscribed"). When omitted the
+                       client receives all event types that pass the
+                       wallet-relevance filter. Unknown values are rejected with 400.
           - playerId   Only deliver events whose payload contains this player identifier.
                        When omitted no additional player-level filtering is applied.
 
@@ -1830,19 +1859,28 @@ paths:
           - Concurrent streams are limited per wallet by
             SSE_MAX_CONNECTIONS_PER_WALLET (default 5; 0 = unlimited).
 
+        Reconnection: initial `retry:` hint is sent on connect (configured via
+        SSE_RETRY_MS, default 5000 ms + up to 20% random jitter) to prevent reconnect storms.
+
         Keep-alive: a `: ping` comment is sent every SSE_KEEPALIVE_INTERVAL_MS ms
         (default 15 s) to prevent idle-connection timeouts.
       responses:
         '200':
           description: text/event-stream — long-lived SSE connection
+        '400':
+          description: >-
+            { success: false, error: string, code: string, validEventTypes: string[] } — unknown
+            eventType
         '401':
           description: '{ success: false, error: string } — missing or invalid token'
         '403':
-          description: '{ success: false, error: string } — wallet is blocklisted'
+          description: '{ success: false, error: string, code: ''WALLET_BLOCKLISTED'' } — wallet is blocklisted'
         '429':
           description: '{ success: false, error: string } — per-wallet connection limit reached'
         '503':
-          description: '{ success: false, error: string } — global connection limit reached'
+          description: >-
+            { success: false, error: string, code: 'SSE_CAPACITY' } — global connection limit
+            reached (sets Retry-After)
       security:
         - bearerAuth: []
   /players:
@@ -3984,13 +4022,16 @@ paths:
       responses:
         '200':
           description: '{ success: true, data: TrialOfferEvent[] }'
+        '403':
+          description: '{ success: false, error: string } - Wallet mismatch (non-admin/non-owner)'
       security:
         - bearerAuth: []
         - apiKeyAuth:
-            - read:milestones
+            - read:trial_offers
       x-required-role:
         - scout
-      x-api-key-scope: read:milestones
+      x-api-key-scope: read:trial_offers
+      x-owner-only: true
     post:
       tags:
         - scouts
@@ -4490,10 +4531,13 @@ paths:
       responses:
         '200':
           description: '{ success: true, data: PendingMilestone[], total, page, pageSize }'
+        '403':
+          description: '{ success: false, error: string } - Wallet mismatch (non-admin/non-owner)'
       security:
         - bearerAuth: []
       x-required-role:
         - validator
+      x-owner-only: true
   /validators/{wallet}/stats:
     get:
       tags:

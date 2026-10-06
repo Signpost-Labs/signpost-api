@@ -303,7 +303,15 @@ async function processDownMigrations(
   return results;
 }
 
-async function getAppliedMigrations(driver: DbDriver): Promise<Map<string, number>> {
+/**
+ * The forward migrations this build ships with, in the order they are applied.
+ * A database whose applied set covers all of these is at the expected version.
+ */
+export function getExpectedSchemaVersion(): { migrations: string[] } {
+  return { migrations: getMigrationFiles(MIGRATIONS_DIR).upFiles };
+}
+
+export async function getAppliedMigrations(driver: DbDriver): Promise<Map<string, number>> {
   const result = new Map<string, number>();
 
   try {

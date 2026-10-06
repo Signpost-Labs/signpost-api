@@ -6,14 +6,15 @@
 --
 -- This migration adds per-key rate limiting (burst + sustained) and optional monthly quotas.
 -- New columns on api_keys:
---   - rate_limit_per_minute: nullable; default null means use global default (unlimited for now)
+--   - rate_limit_per_minute: added by migration 014 (default 60)
 --   - monthly_quota: nullable; default null means unlimited
 --
 -- New table api_key_usage tracks cumulative request counts per key per month,
 -- using a monthly rolling window (period = YYYY-MM). Requests are counted via
 -- Redis INCR with monthly expiry to avoid a DB write per request (issue #675).
 
-ALTER TABLE api_keys ADD COLUMN rate_limit_per_minute INTEGER;
+-- rate_limit_per_minute already exists: 014_api_key_scopes.sql adds it, so
+-- re-adding it here fails with "duplicate column name" on SQLite.
 ALTER TABLE api_keys ADD COLUMN monthly_quota INTEGER;
 
 CREATE TABLE IF NOT EXISTS api_key_usage (

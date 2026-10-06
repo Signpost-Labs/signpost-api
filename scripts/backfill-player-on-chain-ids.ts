@@ -18,7 +18,7 @@ async function main(): Promise<void> {
   let pending = 0;
 
   try {
-    while (true) {
+    for (;;) {
       const players = await getPlayersMissingOnChainId(afterPlayerId, BATCH_SIZE);
       if (players.length === 0) break;
 

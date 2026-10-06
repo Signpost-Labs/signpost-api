@@ -402,6 +402,12 @@ describe('idempotency middleware — request fingerprint conflicts', () => {
     });
     mockUpdate.mockImplementation((key: string, statusCode: number, body: unknown) => {
       const record = idempotencyStore.get(key);
+      // Mirrors updateIdempotencyRecord: transient 5xx outcomes drop the
+      // pending record instead of caching it.
+      if (record && statusCode >= 500) {
+        idempotencyStore.delete(key);
+        return;
+      }
       if (record) {
         record.status_code = statusCode;
         record.response = JSON.stringify(body);
@@ -528,6 +534,12 @@ describe('idempotency middleware — lease and persistence', () => {
     });
     mockUpdate.mockImplementation((key: string, statusCode: number, body: unknown) => {
       const record = idempotencyStore.get(key);
+      // Mirrors updateIdempotencyRecord: transient 5xx outcomes drop the
+      // pending record instead of caching it.
+      if (record && statusCode >= 500) {
+        idempotencyStore.delete(key);
+        return;
+      }
       if (record) {
         record.status_code = statusCode;
         record.response = JSON.stringify(body);

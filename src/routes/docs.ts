@@ -130,11 +130,23 @@ router.get('/ui', (req: Request, res: Response) => {
   res.type('html').send(html);
 });
 
+/**
+ * GET /api/docs/swagger-ui.css
+ * Serves the Swagger UI stylesheet from swagger-ui-dist for the /ui page.
+ *
+ * @response 200 Swagger UI stylesheet (text/css)
+ */
 router.get('/swagger-ui.css', (_req: Request, res: Response) => {
   const cssPath = require.resolve('swagger-ui-dist/swagger-ui.css');
   res.type('text/css').sendFile(cssPath);
 });
 
+/**
+ * GET /api/docs/swagger-ui-bundle.js
+ * Serves the Swagger UI JavaScript bundle from swagger-ui-dist for the /ui page.
+ *
+ * @response 200 Swagger UI JavaScript bundle (text/javascript)
+ */
 router.get('/swagger-ui-bundle.js', (_req: Request, res: Response) => {
   const jsPath = require.resolve('swagger-ui-dist/swagger-ui-bundle.js');
   res.type('text/javascript').sendFile(jsPath);

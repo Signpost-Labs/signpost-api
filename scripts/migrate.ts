@@ -18,6 +18,7 @@
  */
 
 import { runMigrations, getAppliedMigrations, getExpectedSchemaVersion } from '../src/db/migrate';
+import Database from 'better-sqlite3';
 import { DbDriver } from '../src/db/driver';
 import { SqliteDriver } from '../src/db/sqlite-driver';
 import { PostgresDriver } from '../src/db/postgres-driver';
@@ -50,7 +51,7 @@ async function getDriver(): Promise<DbDriver> {
     await driver.connect();
     return driver;
   } else {
-    const sqliteDriver = new SqliteDriver(config.dbPath);
+    const sqliteDriver = new SqliteDriver(new Database(config.dbPath));
     return sqliteDriver;
   }
 }
@@ -63,14 +64,13 @@ async function cmdUp(): Promise<number> {
   try {
     driver = await getDriver();
     
-    runMigrations(driver);
+    const results = await runMigrations(driver);
+    const newlyApplied = results.filter((r) => r.applied).map((r) => r.filename);
     
-    const applied = getAppliedMigrations(driver);
+    log('info', `Migration complete. Applied ${newlyApplied.length} migration(s)`);
     
-    log('info', `Migration complete. Applied ${applied.length} migration(s)`);
-    
-    if (applied.length > 0) {
-      log('info', 'Applied migrations:', { migrations: applied });
+    if (newlyApplied.length > 0) {
+      log('info', 'Applied migrations:', { migrations: newlyApplied });
     }
     
     return 0;
@@ -96,7 +96,7 @@ async function cmdStatus(): Promise<number> {
   try {
     driver = await getDriver();
     
-    const applied = getAppliedMigrations(driver);
+    const applied = [...(await getAppliedMigrations(driver)).keys()].sort();
     const expected = getExpectedSchemaVersion();
     
     log('info', 'Migration status', { 
@@ -136,7 +136,7 @@ async function cmdVersion(): Promise<number> {
   try {
     driver = await getDriver();
     
-    const applied = getAppliedMigrations(driver);
+    const applied = [...(await getAppliedMigrations(driver)).keys()].sort();
     const expected = getExpectedSchemaVersion();
     
     const currentVersion = applied.length > 0 ? applied[applied.length - 1] : 'none';
@@ -171,15 +171,19 @@ export { getAppliedMigrations, getExpectedSchemaVersion };
 // Main entry point
 const command = process.argv[2] || 'up';
 
+const commands: Record<string, () => Promise<number>> = {
+  up: cmdUp,
+  status: cmdStatus,
+  version: cmdVersion,
+};
+
 switch (command) {
   case 'up':
-    process.exitCode = cmdUp();
-    break;
   case 'status':
-    process.exitCode = cmdStatus();
-    break;
   case 'version':
-    process.exitCode = cmdVersion();
+    void commands[command]().then((code) => {
+      process.exitCode = code;
+    });
     break;
   default:
     console.error(JSON.stringify({

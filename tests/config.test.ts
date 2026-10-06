@@ -7,9 +7,15 @@ describe('config NODE_ENV toggles', () => {
   const originalPlatformSecretKey = process.env.PLATFORM_SECRET_KEY;
   const originalSep10ServerSecret = process.env.SEP10_SERVER_SECRET;
   const originalApiKeyLookupSecret = process.env.API_KEY_LOOKUP_SECRET;
+  const originalJwtSecret = process.env.JWT_SECRET;
 
   afterEach(() => {
     process.env.NODE_ENV = originalEnv;
+    if (originalJwtSecret !== undefined) {
+      process.env.JWT_SECRET = originalJwtSecret;
+    } else {
+      delete process.env.JWT_SECRET;
+    }
     if (originalAdminWallet !== undefined) {
       process.env.ADMIN_WALLET = originalAdminWallet;
     } else {
@@ -38,6 +44,8 @@ describe('config NODE_ENV toggles', () => {
     // Ensure ADMIN_WALLET is set when loading production/staging config
     if (env === 'production' || env === 'staging') {
       process.env.ADMIN_WALLET = 'GADMINWALLET1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+      // Placeholder secrets like 'test-secret' are rejected outside dev/test.
+      process.env.JWT_SECRET = 'k8Zq3vN1pW7xR4tY9bM2cF6hJ0lD5sGaQe';
     }
     // PLATFORM_SECRET_KEY is required in every non-test environment
     if (env !== 'test') {
@@ -58,6 +66,8 @@ describe('config NODE_ENV toggles', () => {
     process.env.NODE_ENV = env;
     if (env === 'production' || env === 'staging') {
       process.env.ADMIN_WALLET = 'GADMINWALLET1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+      // Placeholder secrets like 'test-secret' are rejected outside dev/test.
+      process.env.JWT_SECRET = 'k8Zq3vN1pW7xR4tY9bM2cF6hJ0lD5sGaQe';
     }
     if (env !== 'test') {
       process.env.PLATFORM_SECRET_KEY = 'SPLATFORMSECRETKEY1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';

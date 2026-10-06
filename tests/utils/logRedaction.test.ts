@@ -243,6 +243,8 @@ describe('logRedaction', () => {
     it('enables redaction in staging by default', async () => {
       process.env.NODE_ENV = 'staging';
       process.env.ADMIN_WALLET = 'GADMINWALLET1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
+      // Placeholder secrets like 'test-secret' are rejected outside dev/test.
+      process.env.JWT_SECRET = 'k8Zq3vN1pW7xR4tY9bM2cF6hJ0lD5sGaQe';
       process.env.PLATFORM_SECRET_KEY = 'SPLATFORMSECRETKEY1AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
       jest.resetModules();
       const configModule = await import('../../src/config');

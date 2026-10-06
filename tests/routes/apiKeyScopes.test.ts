@@ -220,7 +220,7 @@ describe('API-key scopes — restricted keys denied on missing scope', () => {
     ['/contacts', 'read:contacts'],
     [`/contacts/${PLAYER_ID}`, 'read:contacts'],
     ['/payments', 'read:payments'],
-    ['/trial-offers', 'read:milestones'],
+    ['/trial-offers', 'read:trial_offers'],
     ['/notes', 'read:notes'],
     [`/notes/${PLAYER_ID}`, 'read:notes'],
     [`/players/${PLAYER_ID}/notes`, 'read:notes'],

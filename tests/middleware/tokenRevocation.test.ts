@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { Keypair, Networks, Transaction } from '@stellar/stellar-sdk';
 import app from '../../src/app';
-import { buildChallenge, verifyAndIssueToken } from '../../src/services/sep10';
+import { buildChallenge } from '../../src/services/sep10';
 
 const SECRET = process.env.JWT_SECRET ?? 'test-secret';
 
@@ -189,33 +189,36 @@ describe('real SEP-10 issued tokens carry a revocable jti', () => {
     mockIsRevoked.mockResolvedValue(false);
   });
 
-  function issueRealToken(role = 'scout'): { token: string; jti: string } {
+  // Issues a token through the real POST /auth/token endpoint so the test
+  // exercises the same signing path production clients use.
+  async function issueRealToken(role = 'scout'): Promise<{ token: string; jti: string }> {
     const clientKeypair = Keypair.random();
     const challengeXdr = buildChallenge(clientKeypair.publicKey());
     const tx = new Transaction(challengeXdr, Networks.TESTNET);
     tx.sign(clientKeypair);
-    const { token } = verifyAndIssueToken(tx.toXdr(), role);
+    const res = await request(app).post('/auth/token').send({ transaction: tx.toXdr(), role });
+    expect(res.status).toBe(200);
+    const token = res.body.accessToken as string;
     const decoded = jwt.decode(token) as jwt.JwtPayload | null;
     expect(decoded?.jti).toEqual(expect.any(String));
     expect((decoded?.jti ?? '').length).toBeGreaterThan(0);
     return { token, jti: decoded?.jti as string };
   }
 
-  it('issues a JWT with a unique jti claim via the real SEP-10 flow', () => {
-    const first = issueRealToken();
-    const second = issueRealToken();
+  it('issues a JWT with a unique jti claim via the real SEP-10 flow', async () => {
+    const first = await issueRealToken();
+    const second = await issueRealToken();
     expect(first.jti).not.toBe(second.jti);
   });
 
   it('revokes a real SEP-10 token via the admin endpoint and rejects it afterwards', async () => {
-    const victim = issueRealToken('scout');
-    const admin = issueRealToken('admin');
-    const adminDecoded = jwt.decode(admin.token) as jwt.JwtPayload | null;
+    const victim = await issueRealToken('scout');
+    const adminToken = makeAdminToken('jti-admin-real-flow');
 
     // Revoking the real token must succeed (pre-fix it returned 400: no jti).
     const revokeRes = await request(app)
       .post('/api/admin/tokens/revoke')
-      .set('Authorization', `Bearer ${admin.token}`)
+      .set('Authorization', `Bearer ${adminToken}`)
       .send({ token: victim.token });
     expect(revokeRes.status).toBe(200);
     expect(revokeRes.body.success).toBe(true);
@@ -224,7 +227,6 @@ describe('real SEP-10 issued tokens carry a revocable jti', () => {
 
     // After revocation, middleware must consult the blocklist with the real jti
     // and reject the token on a protected route.
-    expect(adminDecoded?.jti).toEqual(expect.any(String));
     mockIsRevoked.mockImplementation((id: string) => Promise.resolve(id === victim.jti));
     const victimDecoded = jwt.decode(victim.token) as jwt.JwtPayload | null;
     const protectedRes = await request(app)

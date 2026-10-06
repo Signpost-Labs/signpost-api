@@ -400,7 +400,9 @@ export function getEventsCount(
   const db = getDb();
   const payloadPredicate = eventPayloadPredicate(filters ?? {});
   const sql = type
+    // sql-injection-check-ignore: payloadPredicate.sql is built from validated field names and `?` placeholders; values are bound via params.
     ? `SELECT COUNT(*) AS count FROM events WHERE type = ?${payloadPredicate.sql}`
+    // sql-injection-check-ignore: payloadPredicate.sql is built from validated field names and `?` placeholders; values are bound via params.
     : `SELECT COUNT(*) AS count FROM events WHERE 1 = 1${payloadPredicate.sql}`;
   const params = type ? [type, ...payloadPredicate.params] : payloadPredicate.params;
   const row = timedQuery(sql, () => db.prepare(sql).get(...params) as { count: number } | undefined);

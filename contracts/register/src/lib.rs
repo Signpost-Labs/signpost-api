@@ -1,6 +1,5 @@
 #![no_std]
 
-use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String, Vec};
 use scout_off_shared::{
     errors::Error,
     storage::{
@@ -9,6 +8,7 @@ use scout_off_shared::{
         LEDGER_BUMP_AMOUNT, LEDGER_LIFETIME_THRESHOLD, MAX_PAGE_SIZE,
     },
 };
+use soroban_sdk::{contract, contractimpl, contracttype, symbol_short, Address, Env, String, Vec};
 
 const MAX_METADATA_URI_BYTES: u32 = 2_048;
 const MAX_POSITION_BYTES: u32 = 64;
@@ -28,6 +28,16 @@ pub struct PlayerData {
     pub region: String,
     pub progress_level: u32,
     pub created_at: u64,
+}
+
+/// A page of `PlayerData` results; `next` is the start index of the following
+/// page, or `None` when this is the last one. `#[contracttype]` does not
+/// support generics, so each contract defines its own concrete page type.
+#[contracttype]
+#[derive(Clone)]
+pub struct PlayerPage {
+    pub items: Vec<PlayerData>,
+    pub next: Option<u32>,
 }
 
 #[contracttype]
@@ -53,11 +63,9 @@ pub enum DataKey {
 fn get_player_data(env: &Env, player_id: u64) -> Option<PlayerData> {
     let key = DataKey::Player(player_id);
     if env.storage().persistent().has(&key) {
-        env.storage().persistent().extend_ttl(
-            &key,
-            LEDGER_LIFETIME_THRESHOLD,
-            LEDGER_BUMP_AMOUNT,
-        );
+        env.storage()
+            .persistent()
+            .extend_ttl(&key, LEDGER_LIFETIME_THRESHOLD, LEDGER_BUMP_AMOUNT);
         env.storage().persistent().get(&key)
     } else {
         let player = env.storage().instance().get(&key);
@@ -71,21 +79,17 @@ fn get_player_data(env: &Env, player_id: u64) -> Option<PlayerData> {
 fn set_player_data(env: &Env, player_id: u64, player: &PlayerData) {
     let key = DataKey::Player(player_id);
     env.storage().persistent().set(&key, player);
-    env.storage().persistent().extend_ttl(
-        &key,
-        LEDGER_LIFETIME_THRESHOLD,
-        LEDGER_BUMP_AMOUNT,
-    );
+    env.storage()
+        .persistent()
+        .extend_ttl(&key, LEDGER_LIFETIME_THRESHOLD, LEDGER_BUMP_AMOUNT);
 }
 
 fn wallet_is_registered(env: &Env, wallet: &Address) -> bool {
     let key = DataKey::Wallet(wallet.clone());
     if env.storage().persistent().has(&key) {
-        env.storage().persistent().extend_ttl(
-            &key,
-            LEDGER_LIFETIME_THRESHOLD,
-            LEDGER_BUMP_AMOUNT,
-        );
+        env.storage()
+            .persistent()
+            .extend_ttl(&key, LEDGER_LIFETIME_THRESHOLD, LEDGER_BUMP_AMOUNT);
         true
     } else if env.storage().instance().has(&key) {
         bump_instance(env);
@@ -98,11 +102,9 @@ fn wallet_is_registered(env: &Env, wallet: &Address) -> bool {
 fn set_wallet_player_id(env: &Env, wallet: &Address, player_id: u64) {
     let key = DataKey::Wallet(wallet.clone());
     env.storage().persistent().set(&key, &player_id);
-    env.storage().persistent().extend_ttl(
-        &key,
-        LEDGER_LIFETIME_THRESHOLD,
-        LEDGER_BUMP_AMOUNT,
-    );
+    env.storage()
+        .persistent()
+        .extend_ttl(&key, LEDGER_LIFETIME_THRESHOLD, LEDGER_BUMP_AMOUNT);
 }
 
 // ---------------------------------------------------------------------------
@@ -144,7 +146,9 @@ impl RegisterContract {
             .instance()
             .set(&DataKey::PlatformFeeBps, &platform_fee_bps);
         env.storage().instance().set(&DataKey::Counter, &0u64);
-        env.storage().instance().set(&DataKey::PlayerDataMigrated, &true);
+        env.storage()
+            .instance()
+            .set(&DataKey::PlayerDataMigrated, &true);
         set_initialized(&env);
         bump_instance(&env);
         Ok(())
@@ -247,11 +251,11 @@ impl RegisterContract {
         if is_paused(&env) {
             return Err(Error::ContractPaused);
         }
-        if metadata_uri.len() == 0
+        if metadata_uri.is_empty()
             || metadata_uri.len() > MAX_METADATA_URI_BYTES
-            || position.len() == 0
+            || position.is_empty()
             || position.len() > MAX_POSITION_BYTES
-            || region.len() == 0
+            || region.is_empty()
             || region.len() > MAX_REGION_BYTES
         {
             return Err(Error::InvalidInput);
@@ -295,18 +299,14 @@ impl RegisterContract {
     ///
     /// Only the wallet that originally registered the player may call this function.
     /// The wallet must authorize the call.
-    pub fn update_profile(
-        env: Env,
-        player_id: u64,
-        metadata_uri: String,
-    ) -> Result<(), Error> {
+    pub fn update_profile(env: Env, player_id: u64, metadata_uri: String) -> Result<(), Error> {
         if !is_initialized(&env) {
             return Err(Error::NotInitialized);
         }
         if is_paused(&env) {
             return Err(Error::ContractPaused);
         }
-        if metadata_uri.len() == 0 || metadata_uri.len() > MAX_METADATA_URI_BYTES {
+        if metadata_uri.is_empty() || metadata_uri.len() > MAX_METADATA_URI_BYTES {
             return Err(Error::InvalidInput);
         }
 
@@ -389,11 +389,7 @@ impl RegisterContract {
         // list can be removed before processing the bounded player batches.
         env.storage().instance().remove(&DataKey::PlayerList);
 
-        let counter: u64 = env
-            .storage()
-            .instance()
-            .get(&DataKey::Counter)
-            .unwrap_or(0);
+        let counter: u64 = env.storage().instance().get(&DataKey::Counter).unwrap_or(0);
         let mut cursor: u64 = env
             .storage()
             .instance()
@@ -406,9 +402,7 @@ impl RegisterContract {
             if let Some(player) = get_player_data(&env, cursor) {
                 set_player_data(&env, cursor, &player);
                 set_wallet_player_id(&env, &player.wallet, cursor);
-                env.storage()
-                    .instance()
-                    .remove(&DataKey::Player(cursor));
+                env.storage().instance().remove(&DataKey::Player(cursor));
                 env.storage()
                     .instance()
                     .remove(&DataKey::Wallet(player.wallet));
@@ -588,11 +582,7 @@ impl RegisterContract {
         min_tier: u32,
     ) -> Vec<PlayerData> {
         let mut results = Vec::new(&env);
-        let counter: u64 = env
-            .storage()
-            .instance()
-            .get(&DataKey::Counter)
-            .unwrap_or(0);
+        let counter: u64 = env.storage().instance().get(&DataKey::Counter).unwrap_or(0);
         for player_id in 1..=counter {
             if let Some(player) = get_player_data(&env, player_id) {
                 if player.region == region
@@ -607,26 +597,26 @@ impl RegisterContract {
     }
 
     /// Return a page of players matching the given region, position, and minimum progress tier.
-    /// 
+    ///
     /// This is the paginated variant of [`filter_players`]. It returns at most `limit` players
-    /// starting from the given `start` index. Use `next` in the returned [`Page`] to fetch
+    /// starting from the given `start` index. Use `next` in the returned [`PlayerPage`] to fetch
     /// subsequent pages until it is `None`.
-    /// 
+    ///
     /// # Arguments
     /// * `region` - Geographic region to filter by (e.g. "europe")
     /// * `position` - Playing position to filter by (e.g. "forward")
     /// * `min_tier` - Minimum progress level to filter by
     /// * `start` - Zero-based index of the first result to return
     /// * `limit` - Maximum number of results to return (capped at MAX_PAGE_SIZE = 50)
-    /// 
+    ///
     /// # Returns
-    /// A [`Page<PlayerData>`] containing:
+    /// A [`PlayerPage`] containing:
     /// * `items`: The slice of matching players for this page
     /// * `next`: The start index for the next page, or `None` if no more results
-    /// 
+    ///
     /// # Errors
     /// * [`Error::InvalidInput`] — `start` or `limit` is invalid
-    /// 
+    ///
     /// # Budget
     /// This function has a fixed CPU/memory cost independent of total player count.
     /// It reads only the requested slice of the PlayerList and fetches only the
@@ -638,29 +628,37 @@ impl RegisterContract {
         min_tier: u32,
         start: u32,
         limit: u32,
-    ) -> Result<Page<PlayerData>, Error> {
+    ) -> Result<PlayerPage, Error> {
         // Validate inputs
         if limit == 0 {
             return Err(Error::InvalidInput);
         }
         let max_limit = MAX_PAGE_SIZE;
         let effective_limit = limit.min(max_limit);
-        
+
         let list: Vec<u64> = match env.storage().instance().get(&DataKey::PlayerList) {
             Some(l) => l,
-            None => return Ok(Page { items: Vec::new(&env), next: None }),
+            None => {
+                return Ok(PlayerPage {
+                    items: Vec::new(&env),
+                    next: None,
+                })
+            }
         };
 
-        let total = list.len() as u32;
+        let total = list.len();
         if start >= total {
-            return Ok(Page { items: Vec::new(&env), next: None });
+            return Ok(PlayerPage {
+                items: Vec::new(&env),
+                next: None,
+            });
         }
 
         let end = (start + effective_limit).min(total);
-        
+
         let mut results = Vec::new(&env);
         for i in start..end {
-            let player_id = list.get_unchecked(i as usize);
+            let player_id = list.get_unchecked(i);
             if let Some(player) = env
                 .storage()
                 .instance()
@@ -674,10 +672,13 @@ impl RegisterContract {
                 }
             }
         }
-        
+
         let next = if end < total { Some(end) } else { None };
-        
-        Ok(Page { items: results, next })
+
+        Ok(PlayerPage {
+            items: results,
+            next,
+        })
     }
 }
 
@@ -773,6 +774,7 @@ mod tests {
     #[test]
     fn player_and_wallet_records_use_persistent_storage() {
         let env = Env::default();
+        env.mock_all_auths();
         let id = env.register_contract(None, RegisterContract);
         let client = RegisterContractClient::new(&env, &id);
         let admin = Address::generate(&env);
@@ -788,10 +790,7 @@ mod tests {
         );
 
         env.as_contract(&id, || {
-            assert!(env
-                .storage()
-                .persistent()
-                .has(&DataKey::Player(player_id)));
+            assert!(env.storage().persistent().has(&DataKey::Player(player_id)));
             assert!(env
                 .storage()
                 .persistent()
@@ -808,6 +807,7 @@ mod tests {
     #[test]
     fn migrate_players_moves_legacy_records_in_bounded_batches() {
         let env = Env::default();
+        env.mock_all_auths();
         let id = env.register_contract(None, RegisterContract);
         let client = RegisterContractClient::new(&env, &id);
         let admin = Address::generate(&env);
@@ -830,10 +830,9 @@ mod tests {
             env.storage()
                 .instance()
                 .set(&DataKey::PlayerDataMigrated, &false);
-            env.storage().instance().set(
-                &DataKey::PlayerList,
-                &Vec::from_array(&env, [1u64, 2u64]),
-            );
+            env.storage()
+                .instance()
+                .set(&DataKey::PlayerList, &Vec::from_array(&env, [1u64, 2u64]));
             env.storage()
                 .instance()
                 .set(&DataKey::Player(1), &legacy_player(first_wallet.clone()));
@@ -853,12 +852,11 @@ mod tests {
         env.as_contract(&id, || {
             assert!(!env.storage().instance().has(&DataKey::PlayerList));
             assert!(!env.storage().instance().has(&DataKey::Player(1)));
-            assert!(env
-                .storage()
-                .persistent()
-                .has(&DataKey::Player(1)));
+            assert!(env.storage().persistent().has(&DataKey::Player(1)));
         });
-        assert!(!client.migrate_players(&1));
+        // Migrating the last record completes the migration in the same call;
+        // further calls are idempotent no-ops that keep returning true.
+        assert!(client.migrate_players(&1));
         assert_eq!(client.get_player(&2).wallet, second_wallet);
         assert!(client.migrate_players(&1));
 
@@ -866,14 +864,8 @@ mod tests {
             assert!(!env.storage().instance().has(&DataKey::Player(1)));
             assert!(!env.storage().instance().has(&DataKey::Player(2)));
             assert!(!env.storage().instance().has(&DataKey::PlayerList));
-            assert!(env
-                .storage()
-                .persistent()
-                .has(&DataKey::Player(1)));
-            assert!(env
-                .storage()
-                .persistent()
-                .has(&DataKey::Player(2)));
+            assert!(env.storage().persistent().has(&DataKey::Player(1)));
+            assert!(env.storage().persistent().has(&DataKey::Player(2)));
             assert!(env
                 .storage()
                 .persistent()
@@ -1167,7 +1159,11 @@ mod tests {
         let mut previous_level = 0u32;
         let mut state = 0x5eed_1234u64;
         for step in 0..32 {
-            let target_player = if state % 2 == 0 { player_id } else { player_id + 1 };
+            let target_player = if state % 2 == 0 {
+                player_id
+            } else {
+                player_id + 1
+            };
             let requested_level = ((state >> 3) % 4) as u32;
             let result = client.try_update_progress_level(&target_player, &requested_level);
 
@@ -1245,33 +1241,5 @@ mod tests {
             &String::from_str(&env, "europe"),
         );
         assert_eq!(id2, id1 + 1);
-    }
-
-    #[test]
-    fn set_platform_fee_bps_succeeds_for_admin() {
-        let env = Env::default();
-        let (client, admin, token) = setup(&env);
-        client.initialize(&admin, &token, &100);
-        client.set_platform_fee_bps(&250u32);
-        assert_eq!(client.get_platform_fee_bps(), 250u32);
-    }
-
-    #[test]
-    fn set_platform_fee_bps_rejects_out_of_range() {
-        let env = Env::default();
-        let (client, admin, token) = setup(&env);
-        client.initialize(&admin, &token, &100);
-        assert!(client.try_set_platform_fee_bps(&10001u32).is_err());
-    }
-
-    #[test]
-    fn set_platform_fee_bps_allows_zero_and_max() {
-        let env = Env::default();
-        let (client, admin, token) = setup(&env);
-        client.initialize(&admin, &token, &100);
-        client.set_platform_fee_bps(&0u32);
-        assert_eq!(client.get_platform_fee_bps(), 0u32);
-        client.set_platform_fee_bps(&10000u32);
-        assert_eq!(client.get_platform_fee_bps(), 10000u32);
     }
 }

@@ -95,7 +95,7 @@ if (args.length < 2) {
   console.error('Usage: node scripts/generate-persisted-ops.js <input-dir> <output-file>');
   console.error('');
   console.error('Example:');
-  console.error('  node scripts/generate-persisted-ops.js src/frontend/graphql dist/graphql/persisted-operations.json');
+  console.error('  node scripts/generate-persisted-ops.js src/frontend/graphql dist/graphql/persisted-operations.registry.json');
   process.exit(1);
 }
 

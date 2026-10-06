@@ -1030,6 +1030,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/docs/swagger-ui-bundle.js": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Serves the Swagger UI JavaScript bundle from swagger-ui-dist for the /ui page.
+         * @description Serves the Swagger UI JavaScript bundle from swagger-ui-dist for the /ui page.
+         */
+        get: operations["getDocsSwagger-ui-bundle.js"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/docs/swagger-ui.css": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Serves the Swagger UI stylesheet from swagger-ui-dist for the /ui page.
+         * @description Serves the Swagger UI stylesheet from swagger-ui-dist for the /ui page.
+         */
+        get: operations["getDocsSwagger-ui.css"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/docs/ui": {
         parameters: {
             query?: never;
@@ -1087,15 +1127,19 @@ export interface paths {
          *     Authentication: Bearer JWT (same as all other protected routes).
          *
          *     Query parameters (all optional, combinable):
-         *       - eventType  One event type name to subscribe to (e.g. "milestone_approved").
-         *                    When omitted the client receives all event types that pass the
-         *                    wallet-relevance filter.  Unknown values are ignored.
+         *       - eventType  One or more event type names to subscribe to, comma-separated
+         *                    (e.g. "milestone_approved" or
+         *                    "milestone_approved,scout_subscribed"). When omitted the
+         *                    client receives all event types that pass the
+         *                    wallet-relevance filter. Unknown values are rejected with 400.
          *       - playerId   Only deliver events whose payload contains this player identifier.
          *                    When omitted no additional player-level filtering is applied.
          *
          *     Filtering: only events relevant to the authenticated wallet are sent (wallet
-         *     isolation is always enforced regardless of query params).  The optional
-         *     query params add further narrowing on top.
+         *     isolation is always enforced regardless of query params). Player events are
+         *     matched through the authenticated wallet's player record, since their payload
+         *     carries a player ID rather than a wallet address. Optional query params add
+         *     further narrowing on top.
          *
          *     SSE event types sent:
          *       - milestone_approved  (player: their own milestone approvals)
@@ -1113,11 +1157,17 @@ export interface paths {
          *         no further protected events are delivered.
          *       - If the wallet is blocklisted while the stream is open, the same
          *         termination happens with reason "wallet_blocklisted".
+         *       - When the access JWT expires, the stream closes with reason "token_expired".
          *       - Detection bound: immediate for revocations/blocklists processed in
          *         this process; ≤ SSE_AUTH_SWEEP_INTERVAL_MS (default 30 s) for changes
          *         persisted by another instance (one sweep query per process, never a
          *         DB query per keep-alive tick).
          *       - Blocklisted wallets cannot open a new connection (403).
+         *       - Concurrent streams are limited per wallet by
+         *         SSE_MAX_CONNECTIONS_PER_WALLET (default 5; 0 = unlimited).
+         *
+         *     Reconnection: initial `retry:` hint is sent on connect (configured via
+         *     SSE_RETRY_MS, default 5000 ms + up to 20% random jitter) to prevent reconnect storms.
          *
          *     Keep-alive: a `: ping` comment is sent every SSE_KEEPALIVE_INTERVAL_MS ms
          *     (default 15 s) to prevent idle-connection timeouts.
@@ -1413,6 +1463,8 @@ export interface paths {
          * Purchase Player Tokens for the given player (stub — no real XLM transfer).
          * @description Purchase Player Tokens for the given player (stub — no real XLM transfer).
          *     Gated by the `player_tokens` feature flag — returns 404 when disabled.
+         *     The authenticated account is the buyer; the optional buyerWallet field is
+         *     accepted for compatibility only when it matches that account.
          */
         post: operations["buyPlayerToken"];
         delete?: never;
@@ -1991,6 +2043,7 @@ export interface paths {
          *     and idempotency, which guard the on-chain submission this route now performs.
          *
          *     Use POST /api/scouts/:wallet/trial-offers instead.
+         *     Responses include the RFC 9745 Deprecation header, effective 2026-08-18.
          */
         post: operations["createTrialOfferAtScoutsByWalletTrialOfferPost"];
         delete?: never;
@@ -2262,6 +2315,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description Machine-readable error code returned in API responses.
+         * @enum {string}
+         */
+        ErrorCode: "REQUEST_TIMEOUT";
         SuccessEnvelope: {
             /** @enum {boolean} */
             success: true;
@@ -2273,7 +2331,12 @@ export interface components {
             code?: string;
         };
         PlayerSummary: {
+            /** @description API player identifier (cuid2) */
             player_id: string;
+            /** @description Sequential u64 ID assigned by the register contract; null while registration is pending */
+            on_chain_player_id?: string | null;
+            /** @enum {string} */
+            registration_status?: "pending" | "registered";
             wallet: string;
             position?: string | null;
             region?: string | null;
@@ -4077,6 +4140,42 @@ export interface operations {
             };
         };
     };
+    "getDocsSwagger-ui-bundle.js": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Swagger UI JavaScript bundle (text/javascript) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    "getDocsSwagger-ui.css": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Swagger UI stylesheet (text/css) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     getDocsUi: {
         parameters: {
             query?: never;
@@ -4143,6 +4242,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description { success: false, error: string, code: string, validEventTypes: string[] } — unknown eventType */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description { success: false, error: string } — missing or invalid token */
             401: {
                 headers: {
@@ -4150,14 +4256,21 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description { success: false, error: string } — wallet is blocklisted */
+            /** @description { success: false, error: string, code: 'WALLET_BLOCKLISTED' } — wallet is blocklisted */
             403: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
-            /** @description { success: false, error: string } — connection limit reached */
+            /** @description { success: false, error: string } — per-wallet connection limit reached */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description { success: false, error: string, code: 'SSE_CAPACITY' } — global connection limit reached (sets Retry-After) */
             503: {
                 headers: {
                     [name: string]: unknown;
@@ -4242,7 +4355,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description { success: true, data: { playerId, metadataUri, gatewayUrl } } */
+            /** @description { success: true, data: { playerId, onChainPlayerId, registrationStatus, onChainRegistration, metadataUri, gatewayUrl } } */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -4719,12 +4832,12 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description { amount: number, buyerWallet: string } */
+        /** @description { amount: number, buyerWallet?: string } */
         requestBody: {
             content: {
                 "application/json": {
                     amount: number;
-                    buyerWallet: string;
+                    buyerWallet?: string;
                 };
             };
         };
@@ -4738,6 +4851,20 @@ export interface operations {
             };
             /** @description { success: false, error: string } - Invalid amount */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description { success: false, error: string } - Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description { success: false, error: string } - buyerWallet does not match authenticated account */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6175,6 +6302,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description { success: false, error: string } - Wallet mismatch (non-admin/non-owner) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     createTrialOfferAtScoutsByWalletTrialOffersPost: {
@@ -6606,6 +6740,13 @@ export interface operations {
         responses: {
             /** @description { success: true, data: PendingMilestone[], total, page, pageSize } */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description { success: false, error: string } - Wallet mismatch (non-admin/non-owner) */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
