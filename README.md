@@ -1,34 +1,26 @@
 # Promiscope Backend
 
-This repository contains the Node.js and TypeScript API for Promiscope, a community project accountability platform built around transparent project commitments and progress updates. The product is being migrated to this purpose. The current API, database schema, and Soroban integrations still support the previous product workflows; project accountability features are not implemented here yet.
+Promiscope is a community project accountability platform concept. The current API is a mature Node.js service, but its routes and data models still serve the prior product domain; project commitments, evidence submissions, and community review are not implemented yet.
 
-## Repository layout
+## Architecture and tree
 
-- `src/` — API application, routes, middleware, and services.
-- `tests/` — backend unit and integration tests.
-- `contracts/` — Soroban contracts maintained with the backend.
-- `migrations/` — database schema migrations.
-- `clients/typescript/` — generated, typed API client.
-- `docs/` — API, architecture, operations, and deployment documentation.
+The service starts in `src/index.ts`, builds its Express application in `src/app.ts`, and separates HTTP handlers under `src/routes/` from business logic in `src/services/`. Middleware, configuration, database access, and GraphQL support are organized in their corresponding `src/` modules. The event indexer consumes Soroban events and persists indexed state through the database layer. Stellar/Soroban calls and Pinata IPFS uploads are external integrations; Redis supports shared cache invalidation and security events.
+
+- `src/` — API, middleware, services, GraphQL, and configuration.
+- `tests/` — unit and integration tests.
+- `db/` and `migrations/` — database drivers, schema, and migrations.
+- `contracts/` — Soroban workspace maintained with this service.
+- `clients/typescript/` — generated typed API client.
+- `docs/` — authentication, data model, operations, and API references.
+
+## Environment configuration
+
+Copy `.env.example` to `.env`; its comments define defaults, accepted values, and production requirements. The main groups are Stellar (`NETWORK`, `HORIZON_URL`, `SOROBAN_RPC_URL`, contract IDs), auth (`JWT_SECRET`, SEP-10 and API-key settings), database (`DB_DRIVER`, `DB_PATH` or `DATABASE_URL`), IPFS (`PINATA_API_KEY`, `PINATA_SECRET`), and runtime/security settings (`PORT`, CORS, rate limits, logging). Use separate secrets per environment and never commit `.env`.
+
+For local development, use the configured SQLite default and Stellar testnet endpoints. PostgreSQL deployments configure `DATABASE_URL`; Redis, Pinata, and signing credentials are needed only for the corresponding integrations. See [DEPLOYMENT.md](DEPLOYMENT.md) and the focused guides in [docs/](docs/README.md).
 
 ## Development
 
-Use the Node.js version declared in `package.json` and copy `.env.example` to configure local services. From the repository root:
+Use the Node version declared by `package.json`. Run `npm install`, `npm run dev`, `npm run build`, `npm test`, and `npm run lint` as needed. Contract checks use `npm run test:contracts` and the pinned Rust toolchain. PostgreSQL integration tests use `npm run test:postgres` with a configured database.
 
-```sh
-npm install
-npm run dev          # Start the API in development mode
-npm run build        # Compile TypeScript
-npm test             # Run backend tests
-npm run lint         # Run ESLint
-```
-
-Contract checks are available with `npm run test:contracts`; they require the pinned Rust toolchain and may require a Linux target. PostgreSQL integration tests use `npm run test:postgres` and need a configured database.
-
-## Product migration
-
-Treat existing routes, tables, and contract calls as legacy behavior. Before adding accountability features, define their data model and API in the relevant design docs, then implement and test the full flow. Do not present existing football scouting endpoints or records as Promiscope project data. Update the OpenAPI specification and regenerate the TypeScript client when API contracts change.
-
-## Contributions and security
-
-Use focused Conventional Commit messages such as `feat: add project update endpoint` or `fix: validate evidence references`. Pull requests should explain the behavior change, list validation performed, and link the relevant issue. Never commit secrets, populated environment files, or wallet credentials. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+Update the OpenAPI contract and regenerate `clients/typescript/` when API types change. Pull requests should describe the behavior and compatibility impact, link an issue, and report validation performed. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
