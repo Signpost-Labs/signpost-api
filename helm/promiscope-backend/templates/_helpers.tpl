@@ -1,7 +1,7 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "scout-off-backend.name" -}}
+{{- define "promiscope-backend.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -11,7 +11,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this
 (by the DNS naming spec). If release name contains chart name it will be used
 as a full name.
 */}}
-{{- define "scout-off-backend.fullname" -}}
+{{- define "promiscope-backend.fullname" -}}
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -27,16 +27,16 @@ as a full name.
 {{/*
 Create chart label.
 */}}
-{{- define "scout-off-backend.chart" -}}
+{{- define "promiscope-backend.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels applied to every resource.
 */}}
-{{- define "scout-off-backend.labels" -}}
-helm.sh/chart: {{ include "scout-off-backend.chart" . }}
-{{ include "scout-off-backend.selectorLabels" . }}
+{{- define "promiscope-backend.labels" -}}
+helm.sh/chart: {{ include "promiscope-backend.chart" . }}
+{{ include "promiscope-backend.selectorLabels" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
@@ -46,17 +46,17 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Selector labels — used by Deployment and Service to match pods.
 */}}
-{{- define "scout-off-backend.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "scout-off-backend.name" . }}
+{{- define "promiscope-backend.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "promiscope-backend.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
 ServiceAccount name.
 */}}
-{{- define "scout-off-backend.serviceAccountName" -}}
+{{- define "promiscope-backend.serviceAccountName" -}}
 {{- if .Values.serviceAccount.create }}
-{{- default (include "scout-off-backend.fullname" .) .Values.serviceAccount.name }}
+{{- default (include "promiscope-backend.fullname" .) .Values.serviceAccount.name }}
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
@@ -66,7 +66,7 @@ ServiceAccount name.
 Resolve the image tag: use .Values.image.tag when set, otherwise fall back to
 the chart's appVersion.
 */}}
-{{- define "scout-off-backend.imageTag" -}}
+{{- define "promiscope-backend.imageTag" -}}
 {{- if .Values.image.tag }}
 {{- .Values.image.tag }}
 {{- else }}

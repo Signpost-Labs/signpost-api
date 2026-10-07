@@ -1,7 +1,7 @@
-import { createScoutOffClient } from './index.js';
+import { createPromiscopeClient } from './index.js';
 
-const client = createScoutOffClient({
-  baseUrl: 'https://api.scoutoff.io/api',
+const client = createPromiscopeClient({
+  baseUrl: 'https://api.promiscope.example/api',
   accessToken: 'your-access-token',
 });
 

@@ -245,7 +245,7 @@ describe('leader election — Web Locks available', () => {
     const m = makeManager();
     m.connect('tok');
     expect(mockLocks.request).toHaveBeenCalledWith(
-      'scout_off_sse_leader',
+      'promiscope_sse_leader',
       expect.any(Object),
       expect.any(Function),
     );

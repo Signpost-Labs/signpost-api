@@ -1,6 +1,6 @@
 # Soroban Smart Contracts
 
-This directory contains the Soroban smart contracts powering the ScoutOff decentralized football scouting platform on Stellar.
+This directory contains the Soroban smart contracts powering the Promiscope decentralized football scouting platform on Stellar.
 
 ## Contracts in this Workspace
 

@@ -419,7 +419,7 @@ export function getCacheInvalidationTotal(): number {
 
 const feeWithdrawalDbWriteFailuresStore = { total: 0 };
 
-/** Increment scout_off_fee_withdrawal_db_write_failures_total counter. */
+/** Increment promiscope_fee_withdrawal_db_write_failures_total counter. */
 export function incrementFeeWithdrawalDbWriteFailuresTotal(): void {
   feeWithdrawalDbWriteFailuresStore.total += 1;
 }
@@ -572,21 +572,21 @@ export function serializeMetrics(extras: SerializeMetricsExtras = {}): string {
   lines.push(`stuck_pending_pins_count ${stuckPins}`);
 
   // Dead-letter queue depth gauge (#1131) — broken down per subscription.
-  lines.push('# HELP scout_off_webhook_dead_letters_total Current webhook dead-letter queue depth by subscription');
-  lines.push('# TYPE scout_off_webhook_dead_letters_total gauge');
+  lines.push('# HELP promiscope_webhook_dead_letters_total Current webhook dead-letter queue depth by subscription');
+  lines.push('# TYPE promiscope_webhook_dead_letters_total gauge');
   const dlGauge = getWebhookDeadLetterGauge();
   for (const [subscriptionId, count] of Object.entries(dlGauge)) {
     lines.push(
-      `scout_off_webhook_dead_letters_total{subscription_id="${escapeLabelValue(subscriptionId)}"} ${count}`,
+      `promiscope_webhook_dead_letters_total{subscription_id="${escapeLabelValue(subscriptionId)}"} ${count}`,
     );
   }
   // Always emit a lifetime insert counter for dashboards that prefer counters.
-  lines.push('# HELP scout_off_webhook_dead_letters_inserted_total Lifetime webhook dead-letter inserts');
-  lines.push('# TYPE scout_off_webhook_dead_letters_inserted_total counter');
-  lines.push(`scout_off_webhook_dead_letters_inserted_total ${webhook.deadLettersTotal}`);
-  lines.push('# HELP scout_off_webhook_retry_success_total Successful dead-letter auto-retries');
-  lines.push('# TYPE scout_off_webhook_retry_success_total counter');
-  lines.push(`scout_off_webhook_retry_success_total ${webhook.retrySuccessTotal}`);
+  lines.push('# HELP promiscope_webhook_dead_letters_inserted_total Lifetime webhook dead-letter inserts');
+  lines.push('# TYPE promiscope_webhook_dead_letters_inserted_total counter');
+  lines.push(`promiscope_webhook_dead_letters_inserted_total ${webhook.deadLettersTotal}`);
+  lines.push('# HELP promiscope_webhook_retry_success_total Successful dead-letter auto-retries');
+  lines.push('# TYPE promiscope_webhook_retry_success_total counter');
+  lines.push(`promiscope_webhook_retry_success_total ${webhook.retrySuccessTotal}`);
 
   // IP reputation counters.
   lines.push('# HELP ip_reputation_blocked_total Total number of requests blocked by IP reputation scoring');
@@ -600,9 +600,9 @@ export function serializeMetrics(extras: SerializeMetricsExtras = {}): string {
   // tier and the stored progress_level detected by the reconciliation job.
   // A sustained non-zero value indicates the indexer has missed milestone_approved
   // events; run a reindex to resolve (see docs/runbook.md).
-  lines.push('# HELP scout_off_tier_divergence_total Total number of player tier divergence events detected since process start');
-  lines.push('# TYPE scout_off_tier_divergence_total counter');
-  lines.push(`scout_off_tier_divergence_total ${getTierDivergenceForMetrics()}`);
+  lines.push('# HELP promiscope_tier_divergence_total Total number of player tier divergence events detected since process start');
+  lines.push('# TYPE promiscope_tier_divergence_total counter');
+  lines.push(`promiscope_tier_divergence_total ${getTierDivergenceForMetrics()}`);
 
   return lines.join('\n') + '\n';
 }

@@ -1,6 +1,6 @@
 # Secrets Rotation Policy and Procedures
 
-This document outlines the rotation policy, cadence, and step-by-step procedures for every long-lived secret used by the ScoutOff backend. Managing and rotating these secrets on a defined schedule is critical to preserving the security and integrity of the platform.
+This document outlines the rotation policy, cadence, and step-by-step procedures for every long-lived secret used by the Promiscope backend. Managing and rotating these secrets on a defined schedule is critical to preserving the security and integrity of the platform.
 
 ---
 

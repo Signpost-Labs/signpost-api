@@ -1,6 +1,6 @@
 # Data Privacy — Erasure and Anonymization
 
-This document explains which player data the ScoutOff backend can erase on
+This document explains which player data the Promiscope backend can erase on
 request and which data is permanently retained due to on-chain immutability.
 
 ---
@@ -50,7 +50,7 @@ count, progress_level distribution) remain valid.
 
 ## Non-Erasable Data (On-Chain)
 
-ScoutOff records player registration and milestone events on the **Soroban
+Promiscope records player registration and milestone events on the **Soroban
 smart contract** (Stellar network). This data is architecturally immutable:
 
 | Data | Why it cannot be erased |

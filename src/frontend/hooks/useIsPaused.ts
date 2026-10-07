@@ -1,7 +1,7 @@
 /**
  * useIsPaused
  *
- * Event-driven hook that tracks whether the ScoutOff Soroban contract is
+ * Event-driven hook that tracks whether the Promiscope Soroban contract is
  * in the paused (circuit-breaker) state.
  *
  * Previous behaviour (#1314):

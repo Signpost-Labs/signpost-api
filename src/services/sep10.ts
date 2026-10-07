@@ -11,7 +11,7 @@ import {
 import { trace, SpanStatusCode } from '@opentelemetry/api';
 import config from '../config';
 
-const tracer = trace.getTracer('scout-off-backend');
+const tracer = trace.getTracer('promiscope-backend');
 
 /**
  * Resolve the SEP-10 server signing keypair.
@@ -80,7 +80,7 @@ export function getServerKeypair(): Keypair {
  * The client must sign it with their Stellar keypair and return the XDR.
  *
  * Optionally includes the web_auth_domain operation if WEB_AUTH_DOMAIN is configured.
- * Per SEP-10, the first operation must be manageData with name 'scoutoff auth',
+ * Per SEP-10, the first operation must be manageData with name 'promiscope auth',
  * and any additional operations (like web_auth_domain) must be sourced by the server.
  */
 export function buildChallenge(accountId: string): string {
@@ -92,10 +92,10 @@ export function buildChallenge(accountId: string): string {
     networkPassphrase: config.networkPassphrase,
   });
 
-  // Add the mandatory first operation: manageData with 'scoutoff auth'
+  // Add the mandatory first operation: manageData with 'promiscope auth'
   txBuilder.addOperation(
     Operation.manageData({
-      name: 'scoutoff auth',
+      name: 'promiscope auth',
       value: crypto.randomBytes(48).toString('base64'),
       source: accountId,
     })
@@ -220,7 +220,7 @@ export function verifyChallenge(xdr: string): { account: string } {
   const manageDataOp = op as Operation.ManageData;
 
   // 6. Verify the operation name matches the expected server string
-  if (manageDataOp.name !== 'scoutoff auth') {
+  if (manageDataOp.name !== 'promiscope auth') {
     throw new Error('Invalid challenge: wrong operation name');
   }
 

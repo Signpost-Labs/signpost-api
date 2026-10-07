@@ -1,6 +1,6 @@
 #![no_std]
 
-use scout_off_shared::{
+use promiscope_shared::{
     errors::Error,
     storage::{
         bump_instance, is_initialized, is_paused, set_initialized, set_paused, MAX_PAGE_SIZE,

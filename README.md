@@ -1,14 +1,14 @@
-# ScoutOff
+# Promiscope
 
-[![Backend CI](https://github.com/scout-off/scout-off-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/scout-off/scout-off-backend/actions/workflows/ci.yml)
-[![Contract CI](https://github.com/scout-off/scout-off-backend/actions/workflows/contract-ci.yml/badge.svg)](https://github.com/scout-off/scout-off-backend/actions/workflows/contract-ci.yml)
-[![codecov](https://codecov.io/gh/scout-off/scout-off-backend/graph/badge.svg)](https://codecov.io/gh/scout-off/scout-off-backend)
+[![Backend CI](https://github.com/promiscope/promiscope-backend/actions/workflows/ci.yml/badge.svg)](https://github.com/promiscope/promiscope-backend/actions/workflows/ci.yml)
+[![Contract CI](https://github.com/promiscope/promiscope-backend/actions/workflows/contract-ci.yml/badge.svg)](https://github.com/promiscope/promiscope-backend/actions/workflows/contract-ci.yml)
+[![codecov](https://codecov.io/gh/promiscope/promiscope-backend/graph/badge.svg)](https://codecov.io/gh/promiscope/promiscope-backend)
 
-Decentralized football scouting platform on Stellar — tamper-proof player profiles, on-chain progress verification, and direct scout-to-player connections powered by Soroban smart contracts.
+Promiscope is pivoting toward community project accountability. This backend is the legacy implementation: its API, database, and Soroban integrations still serve the former football scouting product. The new public frontend is a static preview; project records, evidence submissions, and community review are not implemented here yet.
 
-## Overview
+## Legacy implementation overview
 
-ScoutOff solves the visibility problem for talented footballers in underserved regions. Players build dynamic on-chain profiles backed by verified milestones — confirmed by coaches, academy directors, and certified trainers — giving scouts the confidence to act on what they see.
+Promiscope solves the visibility problem for talented footballers in underserved regions. Players build dynamic on-chain profiles backed by verified milestones — confirmed by coaches, academy directors, and certified trainers — giving scouts the confidence to act on what they see.
 
 Stellar is the backbone: sub-cent transaction fees mean a scout in Europe can pay to contact a player in South America or Africa without hefty banking overhead, transactions settle in 3–5 seconds for a smooth mobile experience, and Soroban smart contracts make every progress update tamper-proof and auditable.
 
@@ -208,7 +208,7 @@ sequenceDiagram
     actor Player
     actor Validator
     actor Scout
-    participant Contract as ScoutOff Contract
+    participant Contract as Promiscope Contract
     participant Storage as IPFS / Arweave
 
     rect rgb(235, 245, 255)
@@ -304,7 +304,7 @@ The workspace contains four Soroban contracts (`register`, `progress`, `subscrip
 
 ```bash
 stellar contract deploy \
-  --wasm target/wasm32-unknown-unknown/release/scout_off.optimized.wasm \
+  --wasm target/wasm32-unknown-unknown/release/promiscope.optimized.wasm \
   --source deployer \
   --network testnet
 ```
@@ -351,7 +351,7 @@ npm run dev
 
 On startup the server will:
 
-- Open (or create) a SQLite database at `DB_PATH` (default: `scout-off.db`)
+- Open (or create) a SQLite database at `DB_PATH` (default: `promiscope.db`)
 - Begin polling Soroban for contract events every 5 seconds
 - Fail fast if `CONTRACT_ID` or `JWT_SECRET` are missing
 
@@ -380,7 +380,7 @@ This will:
 The API is ready when you see:
 
 ```
-scout-off-backend  | {"level":"info","msg":"ScoutOff backend running on port 4000 [testnet]"}
+promiscope-backend  | {"level":"info","msg":"Promiscope backend running on port 4000 [testnet]"}
 ```
 
 Verify it's up:
@@ -396,7 +396,7 @@ The `docker-compose.yml` ships with sensible defaults so the service starts with
 
 | Variable      | Default in compose                                    | Description                                                    |
 | ------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
-| `CONTRACT_ID` | `PLACEHOLDER_REPLACE_WITH_REAL_CONTRACT_ID`           | Your deployed ScoutOff Soroban contract address                |
+| `CONTRACT_ID` | `PLACEHOLDER_REPLACE_WITH_REAL_CONTRACT_ID`           | Your deployed Promiscope Soroban contract address                |
 | `JWT_SECRET`  | `change-me-to-a-long-random-secret-at-least-32-chars` | Secret for signing JWTs — generate with `openssl rand -hex 32` |
 
 ### Run in the background (detached)
@@ -426,7 +426,7 @@ docker compose down -v
 ### Build the image standalone
 
 ```bash
-docker build -t scout-off-backend .
+docker build -t promiscope-backend .
 ```
 
 Run it with environment variables:
@@ -437,7 +437,7 @@ docker run --rm \
   -v scout_db:/data \
   -e CONTRACT_ID=your_contract_id \
   -e JWT_SECRET=your_secret \
-  scout-off-backend
+  promiscope-backend
 ```
 
 ### Customize the port
@@ -480,7 +480,7 @@ Required environment variables (the server will fail to start without these):
 
 | Variable      | Description                                |
 | ------------- | ------------------------------------------ |
-| `CONTRACT_ID` | Deployed ScoutOff Soroban contract address |
+| `CONTRACT_ID` | Deployed Promiscope Soroban contract address |
 | `JWT_SECRET`  | Secret used to sign SEP-10 JWT tokens      |
 
 Optional but commonly set:
@@ -491,7 +491,7 @@ Optional but commonly set:
 | `HORIZON_URL`                      | Stellar testnet | Stellar Horizon endpoint                        |
 | `SOROBAN_RPC_URL`                  | Stellar testnet | Soroban RPC endpoint                            |
 | `PINATA_API_KEY` / `PINATA_SECRET` | —               | IPFS upload credentials                         |
-| `DB_PATH`                          | `scout-off.db`  | SQLite database file path                       |
+| `DB_PATH`                          | `promiscope.db`  | SQLite database file path                       |
 | `LOG_LEVEL`                        | `info`          | Log verbosity: `debug`, `info`, `warn`, `error` |
 | `SLOW_QUERY_THRESHOLD_MS`          | `50`            | Log a warning for DB queries slower than this (ms) |
 
@@ -577,7 +577,7 @@ When `--only` is omitted all types are seeded (original behaviour).
 **Example output:**
 
 ```
-🌱  ScoutOff seed starting…
+🌱  Promiscope seed starting…
 
   Players   inserted=5  skipped=0
     - seed-player-001, seed-player-002, seed-player-003, seed-player-004, seed-player-005
@@ -790,7 +790,7 @@ Operator topics (secrets rotation, data privacy, Postgres migration, deployment)
 
 | Variable                          | Description                                                                                                           |
 | --------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `CONTRACT_ID`                     | Deployed ScoutOff contract address (**required**)                                                                     |
+| `CONTRACT_ID`                     | Deployed Promiscope contract address (**required**)                                                                     |
 | `JWT_SECRET`                      | Secret used to sign SEP-10 JWT tokens (**required**)                                                                  |
 | `HORIZON_URL`                     | Stellar Horizon endpoint                                                                                              |
 | `SOROBAN_RPC_URL`                 | Soroban RPC endpoint                                                                                                  |
@@ -802,7 +802,7 @@ Operator topics (secrets rotation, data privacy, Postgres migration, deployment)
 | `PLATFORM_FEE_BPS`                | Platform fee in basis points (default: 500)                                                                           |
 | `PORT`                            | Backend API port (default: 4000)                                                                                      |
 | `DB_DRIVER`                       | Database driver to use: `sqlite` (default) or `postgres`                                                              |
-| `DB_PATH`                         | SQLite database file path (default: `scout-off.db`)                                                                   |
+| `DB_PATH`                         | SQLite database file path (default: `promiscope.db`)                                                                   |
 | `DATABASE_URL`                    | PostgreSQL connection URL (required when `DB_DRIVER=postgres`)                                                        |
 | `DATABASE_SSL`                    | PostgreSQL SSL mode: `true`, `no-verify`, or `false` (default: `false`)                                               |
 | `SQLITE_BUSY_TIMEOUT_MS`          | SQLite lock-contention wait before returning `SQLITE_BUSY` (default: `5000`)                                          |
@@ -950,7 +950,7 @@ MIT
 
 ## Support
 
-- GitHub Issues: [Create an issue](https://github.com/scout-off/scout-off-backend/issues)
+- GitHub Issues: [Create an issue](https://github.com/promiscope/promiscope-backend/issues)
 - Stellar Discord: https://discord.gg/stellar
 - Stellar Developers: https://developers.stellar.org
 
@@ -961,12 +961,12 @@ Contributions are welcome! This section provides guidance for backend contributo
 ### Getting Started
 
 1. **Onboarding via Drips Funding Wave Program**\
-   ScoutOff is part of the Drips funding wave program. If you're a contributor interested in joining, visit [drips.network](https://drips.network) to learn about opportunities and register your interest. Funded contributors receive support through the Drips platform.
+   Promiscope is part of the Drips funding wave program. If you're a contributor interested in joining, visit [drips.network](https://drips.network) to learn about opportunities and register your interest. Funded contributors receive support through the Drips platform.
 
 1. **Fork and Set Up**
    ```bash
-   git clone https://github.com/scout-off/scout-off-backend.git
-   cd scout-off-backend
+   git clone https://github.com/promiscope/promiscope-backend.git
+   cd promiscope-backend
    npm install
    npm run dev
    ```
@@ -980,7 +980,7 @@ Contributions are welcome! This section provides guidance for backend contributo
 
 ### Security & Dependency Review
 
-**All contributors must audit third-party dependencies for security vulnerabilities before submitting pull requests.** Given ScoutOff's handling of blockchain payments and user authentication, supply chain security is critical.
+**All contributors must audit third-party dependencies for security vulnerabilities before submitting pull requests.** Given Promiscope's handling of blockchain payments and user authentication, supply chain security is critical.
 
 #### Regular Dependency Audits
 
@@ -1035,7 +1035,7 @@ Fixes #456"
 
 ### Filing Backend Issues
 
-We track ~125 active issues across the ScoutOff platform. Use the guidelines below to help us prioritize and route your contribution efficiently.
+We track ~125 active issues across the Promiscope platform. Use the guidelines below to help us prioritize and route your contribution efficiently.
 
 #### Issue Categories
 
@@ -1066,7 +1066,7 @@ Priority is assigned by maintainers based on impact and timeline:
 #### How to File a High-Quality Issue
 
 1. **Check Existing Issues First**\
-   Search [GitHub Issues](https://github.com/scout-off/scout-off-backend/issues) to avoid duplicates.
+   Search [GitHub Issues](https://github.com/promiscope/promiscope-backend/issues) to avoid duplicates.
 
 1. **Use a Clear Title**\
    ✅ _"Auth token expires before subscription ends"_\

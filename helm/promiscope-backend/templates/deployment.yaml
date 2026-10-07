@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "scout-off-backend.fullname" . }}
+  name: {{ include "promiscope-backend.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "scout-off-backend.labels" . | nindent 4 }}
+    {{- include "promiscope-backend.labels" . | nindent 4 }}
 spec:
   # replicas is managed by the HPA when hpa.enabled=true.
   # We still set it here so `helm template` produces a valid manifest and the
@@ -12,7 +12,7 @@ spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      {{- include "scout-off-backend.selectorLabels" . | nindent 6 }}
+      {{- include "promiscope-backend.selectorLabels" . | nindent 6 }}
   strategy:
     type: {{ .Values.strategy.type }}
     {{- if eq .Values.strategy.type "RollingUpdate" }}
@@ -23,13 +23,13 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "scout-off-backend.selectorLabels" . | nindent 8 }}
+        {{- include "promiscope-backend.selectorLabels" . | nindent 8 }}
       {{- with .Values.podAnnotations }}
       annotations:
         {{- toYaml . | nindent 8 }}
       {{- end }}
     spec:
-      serviceAccountName: {{ include "scout-off-backend.serviceAccountName" . }}
+      serviceAccountName: {{ include "promiscope-backend.serviceAccountName" . }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
@@ -40,7 +40,7 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
-          image: "{{ .Values.image.repository }}:{{ include "scout-off-backend.imageTag" . }}"
+          image: "{{ .Values.image.repository }}:{{ include "promiscope-backend.imageTag" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           {{- with .Values.securityContext }}
           securityContext:
@@ -53,7 +53,7 @@ spec:
           # ── Environment: non-sensitive values from ConfigMap ─────────────────
           envFrom:
             - configMapRef:
-                name: {{ include "scout-off-backend.fullname" . }}-config
+                name: {{ include "promiscope-backend.fullname" . }}-config
           # ── Environment: sensitive values from Secret ────────────────────────
           # All production-required secrets are injected from the Kubernetes
           # Secret so they never appear in the ConfigMap, audit logs, or

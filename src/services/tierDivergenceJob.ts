@@ -11,12 +11,12 @@
  *  1. Fetches a configurable sample of active players (batch, rate-limited).
  *  2. Derives the expected tier from the off-chain event count.
  *  3. Compares it against the stored `progress_level`.
- *  4. Increments `scout_off_tier_divergence_total` and logs each mismatch.
+ *  4. Increments `promiscope_tier_divergence_total` and logs each mismatch.
  *
  * Run via the `setInterval` loop in `src/index.ts`.
  *
  * ## Runbook
- * A sustained non-zero `scout_off_tier_divergence_total` means the indexer
+ * A sustained non-zero `promiscope_tier_divergence_total` means the indexer
  * has missed one or more `milestone_approved` events.  Run a full reindex to
  * replay events from the last known-good ledger and the counter should return
  * to zero.  See docs/runbook.md → "Reindexing" for the procedure.
@@ -32,7 +32,7 @@ import config from '../config';
 /** Running total of tier-divergence events detected since process start. */
 let tierDivergenceTotal = 0;
 
-/** Returns the current value of the `scout_off_tier_divergence_total` counter. */
+/** Returns the current value of the `promiscope_tier_divergence_total` counter. */
 export function getTierDivergenceTotal(): number {
   return tierDivergenceTotal;
 }
@@ -82,7 +82,7 @@ export async function runTierDivergenceCheck(): Promise<void> {
         onchain: storedTier,
         derived: derivedTier,
         approved_milestone_count: approvedCount,
-        metric: 'scout_off_tier_divergence_total',
+        metric: 'promiscope_tier_divergence_total',
       });
     }
   }
@@ -91,7 +91,7 @@ export async function runTierDivergenceCheck(): Promise<void> {
     logger.warn('[tier-divergence] reconciliation pass complete', {
       checked: players.length,
       mismatches,
-      scout_off_tier_divergence_total: tierDivergenceTotal,
+      promiscope_tier_divergence_total: tierDivergenceTotal,
     });
   } else {
     logger.debug('[tier-divergence] reconciliation pass complete — no mismatches', {

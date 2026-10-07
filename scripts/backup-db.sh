@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
 # --- USAGE START ---
-# backup-db.sh — Copy the ScoutOff SQLite database to a timestamped backup location.
+# backup-db.sh — Copy the Promiscope SQLite database to a timestamped backup location.
 #
 # Supports both local filesystem destinations and S3/GCS URIs:
-#   Local:  BACKUP_DEST=/var/backups/scout-off
-#   AWS S3: BACKUP_DEST=s3://my-bucket/scout-off-backups
-#   GCS:    BACKUP_DEST=gs://my-bucket/scout-off-backups
+#   Local:  BACKUP_DEST=/var/backups/promiscope
+#   AWS S3: BACKUP_DEST=s3://my-bucket/promiscope-backups
+#   GCS:    BACKUP_DEST=gs://my-bucket/promiscope-backups
 #
 # Every backup is verified immediately after creation (PRAGMA integrity_check
 # plus row-count spot-checks). Use --verify-only to run a restore-verification
 # drill against an existing backup without creating a new one.
 #
 # Environment variables:
-#   DB_PATH      Path to the SQLite database file (default: scout-off.db)
+#   DB_PATH      Path to the SQLite database file (default: promiscope.db)
 #   BACKUP_DEST  Destination directory or bucket URI (required for backup mode)
 #
 # Usage:
-#   DB_PATH=/data/scout-off.db BACKUP_DEST=/var/backups/scout-off ./scripts/backup-db.sh
-#   ./scripts/backup-db.sh --verify-only /var/backups/scout-off/scout-off-20250720T120000Z.db
-#   ./scripts/backup-db.sh --verify-only s3://my-bucket/scout-off-backups/scout-off-20250720T120000Z.db
+#   DB_PATH=/data/promiscope.db BACKUP_DEST=/var/backups/promiscope ./scripts/backup-db.sh
+#   ./scripts/backup-db.sh --verify-only /var/backups/promiscope/promiscope-20250720T120000Z.db
+#   ./scripts/backup-db.sh --verify-only s3://my-bucket/promiscope-backups/promiscope-20250720T120000Z.db
 #
 # Exit codes:
 #   0  Success (backup created and verified, or standalone verify passed)
@@ -31,7 +31,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # ─── Configuration ────────────────────────────────────────────────────────────
 
-DB_PATH="${DB_PATH:-scout-off.db}"
+DB_PATH="${DB_PATH:-promiscope.db}"
 BACKUP_DEST="${BACKUP_DEST:-}"
 TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 DB_BASENAME="$(basename "${DB_PATH}" .db)"

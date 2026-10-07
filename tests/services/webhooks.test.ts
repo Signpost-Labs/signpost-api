@@ -154,7 +154,7 @@ describe('postWebhookWithRetry', () => {
     expect(mockedFetch).toHaveBeenCalledTimes(1);
     const [, init] = mockedFetch.mock.calls[0];
     const headers = init!.headers as Record<string, string>;
-    expect(headers['User-Agent']).toBe(`ScoutOff-Webhooks/${getVersionInfo().version}`);
+    expect(headers['User-Agent']).toBe(`Promiscope-Webhooks/${getVersionInfo().version}`);
     expect(headers['X-Webhook-Event']).toBe('player_registered');
     expect(headers['X-Webhook-Delivery']).toBe('delivery-123');
   });
@@ -173,7 +173,7 @@ describe('postWebhookWithRetry', () => {
     expect(mockedFetch).toHaveBeenCalledTimes(2);
     for (const [, init] of mockedFetch.mock.calls) {
       const headers = init!.headers as Record<string, string>;
-      expect(headers['User-Agent']).toBe(`ScoutOff-Webhooks/${getVersionInfo().version}`);
+      expect(headers['User-Agent']).toBe(`Promiscope-Webhooks/${getVersionInfo().version}`);
       expect(headers['X-Webhook-Event']).toBe('milestone_approved');
       expect(headers['X-Webhook-Delivery']).toBe('delivery-456');
     }
@@ -283,7 +283,7 @@ describe('dispatchEventWebhook', () => {
 
     // Delivery headers must identify the sender, event and delivery
     const headers = init!.headers as Record<string, string>;
-    expect(headers['User-Agent']).toBe(`ScoutOff-Webhooks/${getVersionInfo().version}`);
+    expect(headers['User-Agent']).toBe(`Promiscope-Webhooks/${getVersionInfo().version}`);
     expect(headers['X-Webhook-Event']).toBe('player_registered');
     expect(headers['X-Webhook-Delivery']).toBe(parsed.deliveryId);
   });

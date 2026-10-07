@@ -1,7 +1,7 @@
 {
-  "name": "@scoutoff/api-client",
+  "name": "@promiscope/api-client",
   "version": "1.0.0",
-  "description": "Versioned TypeScript client for the ScoutOff API",
+  "description": "Versioned TypeScript client for the Promiscope API",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

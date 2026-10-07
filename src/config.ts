@@ -240,8 +240,8 @@ const ENV_LOG_LEVEL: Record<NodeEnv, LogLevel> = {
 const DEFAULT_CORS_ORIGINS: Record<NodeEnv, string[]> = {
   development: ['*'],
   test: ['*'],
-  staging: ['https://staging.scoutoff.io'],
-  production: ['https://app.scoutoff.io', 'https://scoutoff.io'],
+  staging: ['https://staging.promiscope.example'],
+  production: ['https://app.promiscope.example', 'https://promiscope.example'],
 };
 
 const rawCorsOrigins = process.env.CORS_ALLOWED_ORIGINS ?? process.env.ALLOWED_ORIGINS;
@@ -418,7 +418,7 @@ const config = {
     }
     return raw as 'sqlite' | 'postgres';
   })(),
-  dbPath: process.env.DB_PATH ?? 'scout-off.db',
+  dbPath: process.env.DB_PATH ?? 'promiscope.db',
   databaseUrl: process.env.DATABASE_URL ?? '',
   /**
    * Enable SSL/TLS for the PostgreSQL connection.
@@ -702,7 +702,7 @@ const config = {
   /**
    * Tier divergence reconciliation job config (#1132).
    * Compares derived (off-chain) tier against stored progress_level and
-   * emits scout_off_tier_divergence_total + structured log per mismatch.
+   * emits promiscope_tier_divergence_total + structured log per mismatch.
    *
    * TIER_DIVERGENCE_INTERVAL_MS  — how often to run (default: 5 min)
    * TIER_DIVERGENCE_SAMPLE_SIZE  — max players to check per run (default: 100)

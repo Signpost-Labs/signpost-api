@@ -1,12 +1,12 @@
 openapi: "3.0.3"
 info:
-  title: ScoutOff API
+  title: Promiscope API
   description: >
-    Backend API for ScoutOff — a decentralised football scouting platform
+    Backend API for Promiscope — a decentralised football scouting platform
     built on the Stellar blockchain (Soroban smart contracts).
   version: "1.0.0"
   contact:
-    name: ScoutOff Engineering
+    name: Promiscope Engineering
 servers:
   - url: /api
     description: Stable API (version-less alias)

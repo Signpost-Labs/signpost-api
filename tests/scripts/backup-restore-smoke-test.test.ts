@@ -113,7 +113,7 @@ function waitForPort(port: number, timeoutMs: number): Promise<boolean> {
   let tmpDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'scout-off-smoke-'));
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'promiscope-smoke-'));
   });
 
   afterEach(() => {

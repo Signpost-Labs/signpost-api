@@ -1,6 +1,6 @@
 # Performance Budget
 
-This document defines target performance budgets for ScoutOff's most latency-sensitive API endpoints, and documents both the legacy autocannon harness and the new k6 load-test suite. Budgets are derived from a baseline run against the current implementation; they should be revisited when significant architectural changes land (e.g., a Redis cache layer, database migrations, or Soroban contract modifications).
+This document defines target performance budgets for Promiscope's most latency-sensitive API endpoints, and documents both the legacy autocannon harness and the new k6 load-test suite. Budgets are derived from a baseline run against the current implementation; they should be revisited when significant architectural changes land (e.g., a Redis cache layer, database migrations, or Soroban contract modifications).
 
 ## Budgets
 
@@ -135,7 +135,7 @@ Valid scenario names: `auth_flow`, `player_list`, `player_profile`, `subscriptio
 #### 4. Run against staging
 
 ```bash
-K6_BASE_URL=https://staging.scoutoff.io \
+K6_BASE_URL=https://staging.promiscope.example \
 TEST_ADMIN_JWT=eyJ... \
 TEST_SCOUT_JWT=eyJ... \
 k6 run scripts/k6/suite.js
@@ -164,7 +164,7 @@ k6 run scripts/k6/suite.js
 
 The suite is wired into `.github/workflows/loadtest.yml`:
 
-- **Schedule**: nightly at 02:00 UTC against `https://staging.scoutoff.io`
+- **Schedule**: nightly at 02:00 UTC against `https://staging.promiscope.example`
 - **Manual dispatch**: trigger from the GitHub Actions UI with an optional `scenario` filter and `base_url` override
 - **Artefacts**: `k6-results.json` is uploaded for 30 days on every run (pass or fail)
 - **Concurrency**: only one load-test run at a time (`concurrency: loadtest`)
@@ -286,7 +286,7 @@ When Redis becomes unavailable:
 
 ## Baseline
 
-> **Status: baseline not yet recorded — tracked in [issue #720](https://github.com/scout-off/scout-off-backend/issues/720).**
+> **Status: baseline not yet recorded — tracked in [issue #720](https://github.com/promiscope/promiscope-backend/issues/720).**
 >
 > The table below has placeholder values.  The first contributor to run a reproducible
 > load-test against `main` should fill in the numbers and open a follow-up PR to lock

@@ -29,7 +29,7 @@ import {
 import { withRestoredCorrelation } from './txCorrelation';
 import { EventBroadcaster, broadcaster } from './eventBroadcaster';
 
-const tracer = trace.getTracer('scout-off-backend');
+const tracer = trace.getTracer('promiscope-backend');
 
 // Lazy import cache service to avoid circular dependency
 function getCache() {

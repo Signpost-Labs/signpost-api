@@ -225,7 +225,7 @@ If a reindex fails partway through (network error, RPC timeout, database crash),
 **Manual recovery (if needed):**
 ```bash
 # Check the current cursor
-sqlite3 scout-off.db "SELECT last_ledger FROM migration_state LIMIT 1;"
+sqlite3 promiscope.db "SELECT last_ledger FROM migration_state LIMIT 1;"
 
 # If it's stuck at an intermediate ledger and you want to resume from a different point:
 curl -X POST https://backend.example.com/api/admin/indexer/reindex \
@@ -262,13 +262,13 @@ Use audit logs to:
 **Symptom:** `indexerLag` is growing, not shrinking.
 
 **Steps:**
-1. Check indexer logs: `grep "\[indexer\]" /var/log/scout-off.log | tail -20`
+1. Check indexer logs: `grep "\[indexer\]" /var/log/promiscope.log | tail -20`
 2. If logs show errors (RPC timeout, etc.), wait 5 minutes and check again. The indexer may catch up on its own.
 3. If lag continues to grow, check the health of Soroban RPC and IPFS connectivity.
 4. If external services are healthy but the indexer is still stuck, initiate a reindex:
    ```bash
    CURRENT_LAG=$(curl https://backend/health | jq .indexerLag)
-   CURRENT_CURSOR=$(sqlite3 scout-off.db "SELECT last_ledger FROM migration_state LIMIT 1;")
+   CURRENT_CURSOR=$(sqlite3 promiscope.db "SELECT last_ledger FROM migration_state LIMIT 1;")
    NEW_CURSOR=$((CURRENT_CURSOR - 1000))  # Go back 1000 ledgers to re-sync
    curl -X POST https://backend/api/admin/indexer/reindex \
      -H "Authorization: Bearer $ADMIN_JWT" \
@@ -297,7 +297,7 @@ Use audit logs to:
 1. Stop the backend (to prevent new writes during recovery).
 2. Restore the database from the most recent backup:
    ```bash
-   cp /var/backups/scout-off/scout-off-20250829T120000Z.db scout-off.db
+   cp /var/backups/promiscope/promiscope-20250829T120000Z.db promiscope.db
    ```
 3. Restart the backend.
 4. Check the current cursor:

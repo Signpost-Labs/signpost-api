@@ -154,7 +154,7 @@ dependencies = [
  "progress",
  "proptest",
  "register",
- "scout-off-shared",
+ "promiscope-shared",
  "soroban-sdk",
  "subscription",
 ]
@@ -840,7 +840,7 @@ name = "player-token"
 version = "0.1.0"
 dependencies = [
  "proptest",
- "scout-off-shared",
+ "promiscope-shared",
  "soroban-sdk",
 ]
 
@@ -893,7 +893,7 @@ version = "0.1.0"
 dependencies = [
  "proptest",
  "register",
- "scout-off-shared",
+ "promiscope-shared",
  "soroban-sdk",
 ]
 
@@ -1027,7 +1027,7 @@ name = "register"
 version = "0.1.0"
 dependencies = [
  "proptest",
- "scout-off-shared",
+ "promiscope-shared",
  "soroban-sdk",
 ]
 
@@ -1087,7 +1087,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "scout-off-shared"
+name = "promiscope-shared"
 version = "0.1.0"
 dependencies = [
  "soroban-sdk",
@@ -1481,7 +1481,7 @@ name = "subscription"
 version = "0.1.0"
 dependencies = [
  "proptest",
- "scout-off-shared",
+ "promiscope-shared",
  "soroban-sdk",
 ]
 

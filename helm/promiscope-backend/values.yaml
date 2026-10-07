@@ -1,10 +1,10 @@
 # =============================================================================
-# scout-off-backend Helm values
+# promiscope-backend Helm values
 #
 # Every tunable parameter is documented with a comment describing its purpose
 # and the accepted values. Override any of these in a separate values file:
 #
-#   helm upgrade --install scout-off-backend ./helm/scout-off-backend \
+#   helm upgrade --install promiscope-backend ./helm/promiscope-backend \
 #     -f my-prod-values.yaml
 # =============================================================================
 
@@ -13,7 +13,7 @@
 # -----------------------------------------------------------------------------
 image:
   # Container registry + image name
-  repository: ghcr.io/scoutoff/scout-off-backend
+  repository: ghcr.io/promiscope/promiscope-backend
   # Image tag to deploy. Defaults to the chart's appVersion when set to "".
   tag: ""
   # Pull policy: Always | IfNotPresent | Never
@@ -142,14 +142,14 @@ ingress:
   #  kubernetes.io/ingress.class: nginx
   #  cert-manager.io/cluster-issuer: letsencrypt-prod
   hosts:
-    - host: api.scoutoff.io
+    - host: api.promiscope.example
       paths:
         - path: /
           pathType: Prefix
   tls:
-    - secretName: scout-off-tls
+    - secretName: promiscope-tls
       hosts:
-        - api.scoutoff.io
+        - api.promiscope.example
 
 # -----------------------------------------------------------------------------
 # Liveness probe
@@ -186,9 +186,9 @@ readinessProbe:
 # Kubernetes Secret reference
 #
 # ALL sensitive values are sourced from a pre-existing Kubernetes Secret named
-# "scout-off-secrets". Create it before deploying:
+# "promiscope-secrets". Create it before deploying:
 #
-#   kubectl create secret generic scout-off-secrets \
+#   kubectl create secret generic promiscope-secrets \
 #     --from-literal=JWT_SECRET=<min-32-char-random-string> \
 #     --from-literal=SEP10_SERVER_SECRET=<stellar-secret-key-starting-with-S> \
 #     --from-literal=PLATFORM_SECRET_KEY=<stellar-secret-key-starting-with-S> \
@@ -216,7 +216,7 @@ readinessProbe:
 #
 # The secret name can be overridden here if your naming convention differs.
 # -----------------------------------------------------------------------------
-secretName: scout-off-secrets
+secretName: promiscope-secrets
 
 # -----------------------------------------------------------------------------
 # Non-sensitive environment variables (ConfigMap)
@@ -249,7 +249,7 @@ env:
   # postgres: required for horizontal scaling (replicaCount > 1 or HPA). Also
   #   requires DATABASE_URL in the Secret. See docs/postgres-migration.md.
   DB_DRIVER: sqlite
-  DB_PATH: /data/scout-off.db
+  DB_PATH: /data/promiscope.db
   # Platform fee in basis points (100 bps = 1%). Default: 500 (5%).
   PLATFORM_FEE_BPS: "500"
   # SSE keep-alive interval in ms
@@ -269,8 +269,8 @@ env:
   # Stellar health check (set false in staging)
   STELLAR_HEALTH_CHECK: "true"
   # CORS allowed origins (comma-separated). Override per environment.
-  # Production default defined in config.ts: https://app.scoutoff.io,https://scoutoff.io
-  CORS_ALLOWED_ORIGINS: "https://app.scoutoff.io,https://scoutoff.io"
+  # Production default defined in config.ts: https://app.promiscope.example,https://promiscope.example
+  CORS_ALLOWED_ORIGINS: "https://app.promiscope.example,https://promiscope.example"
   # Subscription grace period after expiry (hours). Default: 24.
   SUBSCRIPTION_GRACE_PERIOD_HOURS: "24"
   # Number of trusted reverse proxy hops in front of this server. Default: 1.
@@ -348,7 +348,7 @@ affinity: {}
 #   extraVolumes:
 #     - name: custom-config
 #       configMap:
-#         name: scout-off-config
+#         name: promiscope-config
 #   extraVolumeMounts:
 #     - name: custom-config
 #       mountPath: /etc/custom-config

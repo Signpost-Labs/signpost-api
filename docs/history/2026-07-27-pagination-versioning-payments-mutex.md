@@ -6,7 +6,7 @@ All four tasks have been fully implemented and committed to branch `feat/paginat
 
 **Commit:** `884fab1`  
 **Branch:** `feat/pagination-versioning-payments-mutex`  
-**Author:** Kiro Agent <kiro@scoutoff.io>
+**Author:** Kiro Agent <kiro@promiscope.example>
 
 ---
 
@@ -88,7 +88,7 @@ All four tasks have been fully implemented and committed to branch `feat/paginat
 
 ## Next Steps: Push & Create PR
 
-The branch is ready locally but push is blocked due to GitHub authentication (stored credential is for `Nehza001` who doesn't have write access to `updateboi/scout-off-backend`).
+The branch is ready locally but push is blocked due to GitHub authentication (stored credential is for `Nehza001` who doesn't have write access to `updateboi/promiscope-backend`).
 
 ### To complete:
 
@@ -96,7 +96,7 @@ The branch is ready locally but push is blocked due to GitHub authentication (st
    ```bash
    # Option 1: Update Windows Credential Manager with correct PAT
    # Option 2: Use SSH instead of HTTPS
-   git remote set-url origin git@github.com:updateboi/scout-off-backend.git
+   git remote set-url origin git@github.com:updateboi/promiscope-backend.git
    ```
 
 2. **Push the branch:**

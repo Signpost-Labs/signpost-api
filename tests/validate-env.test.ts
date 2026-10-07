@@ -78,7 +78,7 @@ describe('validate-env runtime validation', () => {
       NODE_ENV: 'production',
       CONTRACT_ID: 'CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4',
       JWT_SECRET: 'test-secret',
-      CORS_ALLOWED_ORIGINS: 'https://app.scoutoff.io,https://staging.scoutoff.io',
+      CORS_ALLOWED_ORIGINS: 'https://app.promiscope.example,https://staging.promiscope.example',
     };
     const errors = validateRuntimeEnv(env);
     expect(errors).toEqual([]);

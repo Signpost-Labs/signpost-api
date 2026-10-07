@@ -13,7 +13,7 @@ import {
   requireOnChainPlayerId,
 } from './stellarCore';
 
-const tracer = trace.getTracer('scout-off-backend');
+const tracer = trace.getTracer('promiscope-backend');
 
 export async function submitContactPayment(
   scoutWallet: string,
@@ -249,7 +249,7 @@ export interface SubscriptionResult {
  * Matches a missing/expired classic Stellar trustline in a simulation/result
  * error string. The contract's payment token may be a Stellar Asset Contract
  * wrapping a classic asset, whose trustline errors surface as diagnostic text
- * rather than a scout_off_shared::errors::Error code, so — like
+ * rather than a promiscope_shared::errors::Error code, so — like
  * isContractPausedError() above — this is a best-effort message match rather
  * than a numbered contract error.
  */

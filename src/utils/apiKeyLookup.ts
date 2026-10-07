@@ -47,7 +47,7 @@ const VERSION_PREFIX = 'v1';
  * Domain separator mixed into every digest so the pepper can never produce a
  * value that collides with an HMAC computed for some other purpose.
  */
-const DOMAIN = 'scout-off:api-key-lookup:v1';
+const DOMAIN = 'promiscope:api-key-lookup:v1';
 
 /** Required length of API_KEY_LOOKUP_SECRET, in bytes, once hex-decoded. */
 const SECRET_BYTES = 32;
@@ -59,7 +59,7 @@ const SECRET_BYTES = 32;
  * suite runnable without every contributor minting a secret.
  */
 const INSECURE_DEV_SECRET = createHash('sha256')
-  .update('scout-off-insecure-dev-only-api-key-lookup-pepper')
+  .update('promiscope-insecure-dev-only-api-key-lookup-pepper')
   .digest();
 
 let warnedInsecureDevSecret = false;

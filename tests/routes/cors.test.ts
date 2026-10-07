@@ -8,7 +8,7 @@ jest.mock('../../src/services/ipfs', () => ({
 import request from 'supertest';
 
 describe('CORS origin allowlist', () => {
-  const ALLOWED = 'https://app.scoutoff.io';
+  const ALLOWED = 'https://app.promiscope.example';
 
   beforeAll(() => {
     jest.setTimeout(15000);
@@ -97,13 +97,13 @@ describe('CORS origin allowlist', () => {
 
   it('supports multiple allowlisted origins via CORS_ALLOWED_ORIGINS', async () => {
     process.env.NODE_ENV = 'production';
-    process.env.CORS_ALLOWED_ORIGINS = 'https://app.scoutoff.io,https://staging.scoutoff.io';
+    process.env.CORS_ALLOWED_ORIGINS = 'https://app.promiscope.example,https://staging.promiscope.example';
 
     const { default: app } = await import('../../src/app');
     const res = await request(app)
       .get('/health')
-      .set('Origin', 'https://staging.scoutoff.io');
-    expect(res.headers['access-control-allow-origin']).toBe('https://staging.scoutoff.io');
+      .set('Origin', 'https://staging.promiscope.example');
+    expect(res.headers['access-control-allow-origin']).toBe('https://staging.promiscope.example');
   });
 
   it('returns CORS headers on preflight OPTIONS request for allowed origin', async () => {

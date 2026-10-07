@@ -3,7 +3,7 @@
 -- tx_hash so replaying the same on-chain event never creates duplicate rows.
 --
 -- Distinct from the `trial_offers` table (003_subscriptions_and_trial_offers.sql),
--- which tracks the separate scout-offer / player-response workflow keyed by
+-- which tracks the separate proposer-offer / player-response workflow keyed by
 -- offer_id. This table is the indexer-side event log of on-chain submissions.
 
 CREATE TABLE IF NOT EXISTS trial_offer_events (

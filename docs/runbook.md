@@ -17,7 +17,7 @@ Start every investigation with the health and metrics endpoints:
 | -------- | ----------------- |
 | `GET /health` | Process liveness, Stellar RPC reachability (`healthStatus.stellar`), DB probe (`healthStatus.db`) |
 | `GET /ready`  | Readiness: `ipfs`, `db`, `stellar` — returns `503`/`degraded` when any dependency is down |
-| `GET /metrics`| Prometheus metrics: `indexer_ledger_lag`, `http_requests_total`, `http_errors_total`, `db_query_duration_seconds`, `soroban_rpc_duration_seconds`, `webhook_delivery_total`, `scout_off_webhook_dead_letters_total`, `ip_reputation_blocked_total`, `sse_connections_active`, … |
+| `GET /metrics`| Prometheus metrics: `indexer_ledger_lag`, `http_requests_total`, `http_errors_total`, `db_query_duration_seconds`, `soroban_rpc_duration_seconds`, `webhook_delivery_total`, `promiscope_webhook_dead_letters_total`, `ip_reputation_blocked_total`, `sse_connections_active`, … |
 
 **`indexer_ledger_lag`** is the single most useful indexer signal: ledgers
 behind the chain tip after the last poll. It is exposed as
@@ -117,7 +117,7 @@ node scripts/backfill.js --backfill 4520000
 ## Draining the dead-letter queue
 
 Webhook deliveries that exhaust their retries land in the dead-letter queue
-(`webhook_dead_letters`). Watch `scout_off_webhook_dead_letters_total` on
+(`webhook_dead_letters`). Watch `promiscope_webhook_dead_letters_total` on
 `/metrics` and the critical log `webhook_dead_letter_threshold_crossed` (see
 [docs/webhooks.md](webhooks.md#alerting-and-metrics-1131)) — the log line names
 the top culprit subscriptions.
@@ -230,7 +230,7 @@ curl -X POST -H "Authorization: Bearer $ADMIN_JWT" \
 
 ## Tier divergence alert (#1132)
 
-**Symptom:** `scout_off_tier_divergence_total` in `GET /metrics` is non-zero or
+**Symptom:** `promiscope_tier_divergence_total` in `GET /metrics` is non-zero or
 growing. Scouts may see stale progress tiers for one or more players.
 
 **Cause:** The indexer missed one or more `milestone_approved` events. The
@@ -241,7 +241,7 @@ matches the stored `progress_level`.
 
 ```bash
 # 1. Check the current mismatch count
-curl -s http://localhost:4000/metrics | grep scout_off_tier_divergence
+curl -s http://localhost:4000/metrics | grep promiscope_tier_divergence
 
 # 2. Find which players are affected in the structured logs
 # Look for entries with msg "tier-divergence mismatch detected"
@@ -260,7 +260,7 @@ curl -X POST http://localhost:4000/api/admin/reindex \
   -H "Authorization: Bearer <ADMIN_JWT>"
 ```
 
-After reindexing completes, `scout_off_tier_divergence_total` should stop
+After reindexing completes, `promiscope_tier_divergence_total` should stop
 growing and the next reconciliation pass (every `TIER_DIVERGENCE_INTERVAL_MS`,
 default 5 min) should log zero mismatches.
 

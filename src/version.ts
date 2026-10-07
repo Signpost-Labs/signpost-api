@@ -36,8 +36,8 @@ export function getVersionInfo(): { version: string; commit: string; node: strin
 }
 
 // Descriptive User-Agent for outbound webhook deliveries, e.g.
-// "ScoutOff-Webhooks/1.2.3". Receivers can use this to identify the sender
+// "Promiscope-Webhooks/1.2.3". Receivers can use this to identify the sender
 // in access logs without parsing the payload.
 export function getWebhookUserAgent(): string {
-  return `ScoutOff-Webhooks/${pkg.version}`;
+  return `Promiscope-Webhooks/${pkg.version}`;
 }

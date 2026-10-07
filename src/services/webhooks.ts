@@ -19,7 +19,7 @@ export function generateDeliveryId(): string {
   return crypto.randomUUID();
 }
 
-const tracer = trace.getTracer('scout-off-backend');
+const tracer = trace.getTracer('promiscope-backend');
 
 type WebhookRetryOptions = {
   retries?: number;
@@ -102,7 +102,7 @@ export async function postWebhookWithRetry(
     const rawBody = JSON.stringify(payload);
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'User-Agent': `ScoutOff-Webhooks/${getVersionInfo().version}`,
+      'User-Agent': `Promiscope-Webhooks/${getVersionInfo().version}`,
     };
     if (options.eventType) {
       headers['X-Webhook-Event'] = options.eventType;

@@ -3,13 +3,13 @@ import type { paths } from './schema.js';
 
 export type { paths } from './schema.js';
 
-export interface ScoutOffClientOptions extends Omit<ClientOptions, 'baseUrl' | 'headers'> {
+export interface PromiscopeClientOptions extends Omit<ClientOptions, 'baseUrl' | 'headers'> {
   baseUrl: string;
   accessToken?: string;
   headers?: HeadersInit;
 }
 
-export function createScoutOffClient(options: ScoutOffClientOptions) {
+export function createPromiscopeClient(options: PromiscopeClientOptions) {
   const { accessToken, headers, ...clientOptions } = options;
   const requestHeaders = new Headers(headers);
   if (accessToken) requestHeaders.set('Authorization', `Bearer ${accessToken}`);

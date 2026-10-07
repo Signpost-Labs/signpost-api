@@ -6,7 +6,7 @@
  *  - Mismatch detected → counter incremented, warn log emitted with player_id, onchain, derived
  *  - Multiple mismatches → counter incremented per mismatch
  *  - DB error during player fetch → job logs warn, does not throw
- *  - scout_off_tier_divergence_total appears in /metrics output
+ *  - promiscope_tier_divergence_total appears in /metrics output
  */
 import {
   runTierDivergenceCheck,

@@ -1,10 +1,10 @@
 # PostgreSQL Migration Guide
 
-This guide documents the process for migrating a Scout-Off backend deployment from SQLite to PostgreSQL.
+This guide documents the process for migrating a Promiscope backend deployment from SQLite to PostgreSQL.
 
 ## Overview
 
-Scout-Off supports two database drivers:
+Promiscope supports two database drivers:
 - **SQLite** (default): Fast, simple, file-based. Suitable for single-instance deployments.
 - **PostgreSQL** (opt-in): Network-accessible, supports horizontal scaling, concurrent connections.
 
@@ -15,7 +15,7 @@ The migration is reversible within a maintenance window.
 > SQL *schema* migrations are named, paired across dialects, and ordered, see
 > [db/README.md](../db/README.md).
 
-> **Helm chart default:** the `helm/scout-off-backend` chart ships with a
+> **Helm chart default:** the `helm/promiscope-backend` chart ships with a
 > single-replica, SQLite-backed default topology (`replicaCount: 1`, HPA and
 > PDB disabled). Horizontal scaling (multiple replicas or the HPA) requires
 > PostgreSQL — switch `env.DB_DRIVER` to `postgres` and provide
@@ -83,18 +83,18 @@ Breaking this down:
 - `password` — User password (keep secure; use secrets management)
 - `host` — PostgreSQL server hostname or IP
 - `5432` — PostgreSQL port (default; adjust if your server runs on a different port)
-- `dbname` — Database name (e.g., `scout_off`)
+- `dbname` — Database name (e.g., `promiscope`)
 
 **Examples:**
 
 Local development (Docker Compose):
 ```
-DATABASE_URL=postgresql://scout_user:password@postgres:5432/scout_off
+DATABASE_URL=postgresql://scout_user:password@postgres:5432/promiscope
 ```
 
 AWS RDS:
 ```
-DATABASE_URL=postgresql://scout_user:password@scout-off-db.abc123.us-east-1.rds.amazonaws.com:5432/scout_off
+DATABASE_URL=postgresql://scout_user:password@promiscope-db.abc123.us-east-1.rds.amazonaws.com:5432/promiscope
 ```
 
 Heroku Postgres:
@@ -139,7 +139,7 @@ docker-compose up -d postgres
 Verify connectivity:
 
 ```bash
-docker-compose exec postgres psql -U scout_user -d scout_off -c "SELECT 1"
+docker-compose exec postgres psql -U scout_user -d promiscope -c "SELECT 1"
 ```
 
 ### Production Setup
@@ -149,8 +149,8 @@ Create a dedicated database and user:
 ```sql
 -- Connect to PostgreSQL as admin
 CREATE USER scout_user WITH PASSWORD '[strong-password]';
-CREATE DATABASE scout_off OWNER scout_user;
-GRANT ALL PRIVILEGES ON DATABASE scout_off TO scout_user;
+CREATE DATABASE promiscope OWNER scout_user;
+GRANT ALL PRIVILEGES ON DATABASE promiscope TO scout_user;
 ```
 
 ## Step 2: Export Data from SQLite
@@ -159,7 +159,7 @@ While the backend is running, export the SQLite database:
 
 ```bash
 # SQLite to CSV export (example - adjust based on your needs)
-sqlite3 scout-off.db <<'EOF'
+sqlite3 promiscope.db <<'EOF'
 .mode csv
 .output events.csv
 SELECT * FROM events;
@@ -176,18 +176,18 @@ EOF
 Or use `sqlite3` dump format:
 
 ```bash
-sqlite3 scout-off.db ".dump" > scout-off-dump.sql
+sqlite3 promiscope.db ".dump" > promiscope-dump.sql
 ```
 
 ## Step 3: Run Migrations
 
-The Scout-Off backend automatically runs migrations on startup. To switch to PostgreSQL:
+The Promiscope backend automatically runs migrations on startup. To switch to PostgreSQL:
 
 1. Set the `DB_DRIVER` environment variable to `postgres`:
 
 ```bash
 export DB_DRIVER=postgres
-export DATABASE_URL="postgresql://scout_user:[password]@postgres-host:5432/scout_off"
+export DATABASE_URL="postgresql://scout_user:[password]@postgres-host:5432/promiscope"
 ```
 
 2. Start the backend:
@@ -228,7 +228,7 @@ services:
   backend:
     environment:
       DB_DRIVER: postgres
-      DATABASE_URL: "postgresql://scout_user:${DB_PASSWORD}@postgres:5432/scout_off"
+      DATABASE_URL: "postgresql://scout_user:${DB_PASSWORD}@postgres:5432/promiscope"
 ```
 
 ### Kubernetes / Other Orchestration
@@ -337,7 +337,7 @@ If issues arise, rollback to SQLite:
 
 ```bash
 export DB_DRIVER=sqlite
-export DB_PATH=scout-off.db
+export DB_PATH=promiscope.db
 ```
 
 4. Restart backend instances
@@ -367,7 +367,7 @@ because the RDS CA is in the system trust store used by the `pg` library.
 
 ```bash
 DATABASE_SSL=true
-DATABASE_URL="postgresql://scout_user:password@your-rds-host.region.rds.amazonaws.com:5432/scout_off"
+DATABASE_URL="postgresql://scout_user:password@your-rds-host.region.rds.amazonaws.com:5432/promiscope"
 ```
 
 If you need to specify the CA bundle explicitly, do so via `PGSSLROOTCERT` (a standard `libpq`
@@ -421,7 +421,7 @@ When running Postgres locally or inside a private Docker network with no TLS con
 
 ```bash
 DATABASE_SSL=false   # or leave unset
-DATABASE_URL="postgresql://scout_user:password@localhost:5432/scout_off"
+DATABASE_URL="postgresql://scout_user:password@localhost:5432/promiscope"
 ```
 
 ### How it works internally
@@ -441,7 +441,7 @@ For high-concurrency deployments, use PgBouncer or pgpool2:
 
 ```ini
 [databases]
-scout_off = host=postgres port=5432 dbname=scout_off user=scout_user password=password
+promiscope = host=postgres port=5432 dbname=promiscope user=scout_user password=password
 
 [pgbouncer]
 pool_mode = transaction
@@ -452,14 +452,14 @@ default_pool_size = 25
 Then connect backend to PgBouncer:
 
 ```bash
-DATABASE_URL="postgresql://scout_user:password@pgbouncer:6432/scout_off"
+DATABASE_URL="postgresql://scout_user:password@pgbouncer:6432/promiscope"
 ```
 
 ## Performance Tuning
 
 ### PostgreSQL Configuration (`postgresql.conf`)
 
-For typical Scout-Off workloads:
+For typical Promiscope workloads:
 
 ```ini
 # Connection limits
@@ -497,7 +497,7 @@ SELECT pg_reload_conf();
 Verify PostgreSQL is running and accessible:
 
 ```bash
-psql -h postgres-host -U scout_user -d scout_off -c "SELECT 1"
+psql -h postgres-host -U scout_user -d promiscope -c "SELECT 1"
 ```
 
 ### Migration Fails
@@ -529,7 +529,7 @@ SELECT * FROM pg_stat_user_indexes WHERE idx_scan = 0;
 A: Yes. Continue to back up PostgreSQL using `pg_dump`:
 
 ```bash
-pg_dump -h postgres-host -U scout_user scout_off | gzip > backup-$(date +%Y%m%d).sql.gz
+pg_dump -h postgres-host -U scout_user promiscope | gzip > backup-$(date +%Y%m%d).sql.gz
 ```
 
 **Q: What about read replicas?**

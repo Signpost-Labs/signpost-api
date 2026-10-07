@@ -44,7 +44,7 @@ const isWindows = process.platform === 'win32';
     });
     const output = result.stdout;
     expect(output).toContain('backup-db.sh');
-    expect(output).toContain('ScoutOff SQLite database');
+    expect(output).toContain('Promiscope SQLite database');
   });
 
   it('includes environment variable documentation', () => {
@@ -108,7 +108,7 @@ const isWindows = process.platform === 'win32';
     // Create a temporary copy of the script with an extra line inserted
     // inside the USAGE block, then verify --help still works and includes
     // the extra line.
-    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'scout-off-help-'));
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'promiscope-help-'));
     try {
       const scriptContent = fs.readFileSync(BACKUP_SCRIPT, 'utf8');
       const extraLine = '# EXTRA_TEST_LINE: added to verify robustness';

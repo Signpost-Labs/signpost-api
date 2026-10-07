@@ -1,6 +1,6 @@
 #![no_std]
 
-use scout_off_shared::{
+use promiscope_shared::{
     errors::Error,
     storage::{
         bump_instance, is_initialized, is_paused, set_initialized, set_paused, MAX_PAGE_SIZE,
@@ -80,7 +80,7 @@ pub enum DataKey {
     ScoutConnections(Address),
     // Legacy trial offer storage (kept for backward-compat with existing tests)
     TrialOfferKey(Address, u64),
-    ScoutOffers(Address),
+    OfferSubmissions(Address),
     PlayerConnections(u64),
 }
 
@@ -424,14 +424,16 @@ impl ConnectionContract {
         };
         env.storage().instance().set(&offer_key, &offer_data);
 
-        let scout_key = DataKey::ScoutOffers(scout.clone());
-        let mut scout_offers: Vec<u64> = env
+        let offer_index_key = DataKey::OfferSubmissions(scout.clone());
+        let mut submitted_player_ids: Vec<u64> = env
             .storage()
             .instance()
-            .get(&scout_key)
+            .get(&offer_index_key)
             .unwrap_or_else(|| Vec::new(&env));
-        scout_offers.push_back(player_id);
-        env.storage().instance().set(&scout_key, &scout_offers);
+        submitted_player_ids.push_back(player_id);
+        env.storage()
+            .instance()
+            .set(&offer_index_key, &submitted_player_ids);
 
         let player_key = DataKey::PlayerConnections(player_id);
         let mut player_connections: Vec<Address> = env
@@ -502,7 +504,7 @@ impl ConnectionContract {
         let player_ids: Vec<u64> = env
             .storage()
             .instance()
-            .get(&DataKey::ScoutOffers(scout.clone()))
+            .get(&DataKey::OfferSubmissions(scout.clone()))
             .unwrap_or_else(|| Vec::new(&env));
 
         let mut results = Vec::new(&env);
@@ -700,7 +702,7 @@ impl ConnectionContract {
         let player_ids: Vec<u64> = env
             .storage()
             .instance()
-            .get(&DataKey::ScoutOffers(scout.clone()))
+            .get(&DataKey::OfferSubmissions(scout.clone()))
             .unwrap_or_else(|| Vec::new(&env));
 
         let total = player_ids.len();

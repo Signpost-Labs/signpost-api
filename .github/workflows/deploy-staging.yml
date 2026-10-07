@@ -1,4 +1,4 @@
-# Deploy ScoutOff backend to staging on every merge to main.
+# Deploy Promiscope backend to staging on every merge to main.
 #
 # Required GitHub Environment: staging
 # Configure at Settings → Environments → staging
@@ -7,7 +7,7 @@
 #   STAGING_HOST              — staging server hostname or IP
 #   STAGING_SSH_USER          — SSH user for deployment
 #   STAGING_SSH_PRIVATE_KEY   — private key for SSH/SCP (PEM)
-#   STAGING_DEPLOY_PATH       — absolute path on the server (e.g. /var/www/scout-off-backend)
+#   STAGING_DEPLOY_PATH       — absolute path on the server (e.g. /var/www/promiscope-backend)
 #   STAGING_URL               — public staging base URL for smoke tests (e.g. https://api.staging.example.com)
 #   STAGING_DEPLOY_NOTIFY_WEBHOOK — (optional) Slack/Discord webhook URL for failure alerts
 #

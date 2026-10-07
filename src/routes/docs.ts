@@ -109,7 +109,7 @@ router.get('/ui', (req: Request, res: Response) => {
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>ScoutOff API Docs</title>
+  <title>Promiscope API Docs</title>
   <link rel="stylesheet" href="${assetRoot}/swagger-ui.css" />
 </head>
 <body>

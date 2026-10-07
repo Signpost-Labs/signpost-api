@@ -34,8 +34,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-CHART_DIR="${REPO_ROOT}/helm/scout-off-backend"
-RELEASE="scout-off-backend-chart-test"
+CHART_DIR="${REPO_ROOT}/helm/promiscope-backend"
+RELEASE="promiscope-backend-chart-test"
 
 fail() {
   echo "[validate-helm-chart] FAIL: $*" >&2
@@ -166,8 +166,8 @@ if grep -q "WARNING: DB_DRIVER=sqlite" <<<"${notes}"; then
 fi
 pass "postgres + HPA enabled renders HPA without warning"
 
-out=$(render --set dataVolume.persistentVolumeClaim=scout-off-data)
-grep -q 'claimName: "scout-off-data"' <<<"${out}" \
+out=$(render --set dataVolume.persistentVolumeClaim=promiscope-data)
+grep -q 'claimName: "promiscope-data"' <<<"${out}" \
   || fail "dataVolume.persistentVolumeClaim override was not applied"
 if grep -q 'emptyDir: {}' <<<"${out}"; then
   fail "emptyDir rendered despite configured data PVC"

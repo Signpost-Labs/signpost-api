@@ -15,7 +15,7 @@
 //!   argument.
 //! * All token amounts are stored as `u64` (stroops-equivalent precision).
 
-use scout_off_shared::{
+use promiscope_shared::{
     errors::Error,
     storage::{bump_instance, is_initialized, is_paused, set_initialized, set_paused},
 };

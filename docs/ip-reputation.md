@@ -8,5 +8,5 @@ thresholds, decay rate, and whitelist/blacklist behaviour).
 Reputation scores are stored in a process-local in-memory map. They are
 **not** shared across instances in a multi-instance deployment — a given
 IP's score is fragmented per instance rather than tracked cross-instance.
-See [issue #1100](https://github.com/scout-off/scout-off-backend/issues/1100)
+See [issue #1100](https://github.com/promiscope/promiscope-backend/issues/1100)
 for backing this store with Redis.

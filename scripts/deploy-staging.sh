@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deploy ScoutOff backend on the target server using a blue-green strategy.
+# Deploy Promiscope backend on the target server using a blue-green strategy.
 # Invoked remotely by .github/workflows/deploy-staging.yml and
 # .github/workflows/deploy-mainnet.yml after the release tarball is uploaded
 # and extracted.
@@ -40,14 +40,14 @@ case "$ENVIRONMENT" in
   mainnet)
     BLUE_PORT=4002
     GREEN_PORT=4003
-    BLUE_PM2_NAME="scout-off-backend-mainnet-blue"
-    GREEN_PM2_NAME="scout-off-backend-mainnet-green"
+    BLUE_PM2_NAME="promiscope-backend-mainnet-blue"
+    GREEN_PM2_NAME="promiscope-backend-mainnet-green"
     ;;
   staging|*)
     BLUE_PORT=4000
     GREEN_PORT=4001
-    BLUE_PM2_NAME="scout-off-backend-blue"
-    GREEN_PM2_NAME="scout-off-backend-green"
+    BLUE_PM2_NAME="promiscope-backend-blue"
+    GREEN_PM2_NAME="promiscope-backend-green"
     ;;
 esac
 
@@ -60,11 +60,11 @@ ACTIVE_SLOT=$(cat "$SLOT_FILE")
 flip_traffic() {
   local target_slot=$1
   local target_port=$2
-  local nginx_conf="/etc/nginx/conf.d/scout-off-${ENVIRONMENT}-upstream.conf"
+  local nginx_conf="/etc/nginx/conf.d/promiscope-${ENVIRONMENT}-upstream.conf"
 
   echo "Flipping traffic to $target_slot (Port $target_port) [$ENVIRONMENT]..."
   if [ -d "/etc/nginx/conf.d" ]; then
-    echo "upstream scout_off_${ENVIRONMENT}_backend { server 127.0.0.1:${target_port}; }" | sudo tee "$nginx_conf" > /dev/null
+    echo "upstream promiscope_${ENVIRONMENT}_backend { server 127.0.0.1:${target_port}; }" | sudo tee "$nginx_conf" > /dev/null
     sudo systemctl reload nginx
     echo "Nginx reloaded successfully."
   else

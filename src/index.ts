@@ -29,7 +29,7 @@ import http from "http";
 // Database initialization is now async - must be awaited
 async function start() {
   // Register the tier-divergence counter getter so the metrics endpoint can
-  // expose scout_off_tier_divergence_total without a circular import (#1132).
+  // expose promiscope_tier_divergence_total without a circular import (#1132).
   setTierDivergenceGetter(getTierDivergenceTotal);
 
   try {
@@ -72,7 +72,7 @@ async function start() {
 async function startServer() {
   const server = app.listen(config.port, () => {
     logger.info(
-      `ScoutOff backend running on port ${config.port} [${config.network}]`,
+      `Promiscope backend running on port ${config.port} [${config.network}]`,
     );
 
     // Log startup health of critical dependencies
@@ -155,7 +155,7 @@ async function startServer() {
   const reconcileInterval = setInterval(reconcilePins, config.ipfsReconcileIntervalMs);
 
   // Scheduled tier divergence check (#1132): compare derived (off-chain) tier
-  // against stored progress_level; emits scout_off_tier_divergence_total metric
+  // against stored progress_level; emits promiscope_tier_divergence_total metric
   // and structured log per mismatch. Interval configurable via TIER_DIVERGENCE_INTERVAL_MS.
   const runDivergenceCheck = withJobTracking(async () => {
     try {
@@ -290,7 +290,7 @@ async function startServer() {
     unhandledRejectionsTotal += 1;
     const err = reason instanceof Error ? reason : new Error(String(reason));
     logger.error(
-      `Unhandled promise rejection (scout_off_unhandled_rejections_total=${unhandledRejectionsTotal}):`,
+      `Unhandled promise rejection (promiscope_unhandled_rejections_total=${unhandledRejectionsTotal}):`,
       err.stack ?? err.message,
     );
     // Do not exit by default; set EXIT_ON_UNHANDLED_REJECTION=true to opt in.

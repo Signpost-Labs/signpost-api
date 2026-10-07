@@ -2,7 +2,7 @@
 
 ## Overview
 
-The admin multi-sig system governs all high-value operations in the ScoutOff backend via M-of-N approval workflows. Every admin action (pause contract, withdraw fees, update configuration) requires a configured threshold of distinct admin signatures before execution.
+The admin multi-sig system governs all high-value operations in the Promiscope backend via M-of-N approval workflows. Every admin action (pause contract, withdraw fees, update configuration) requires a configured threshold of distinct admin signatures before execution.
 
 **Configuration:**
 - `ADMIN_WALLETS`: Comma-separated list of admin Stellar addresses (e.g., `GABC...,GDEF...`)

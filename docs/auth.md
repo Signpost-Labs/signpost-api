@@ -1,17 +1,17 @@
 # Authentication
 
-This document describes the backend authentication flow for ScoutOff.
+This document describes the backend authentication flow for Promiscope.
 It covers SEP-10 challenge/response, JWT issuance, token claims, refresh behavior, logout, and example `curl` requests.
 
 ## SEP-10 Challenge / Response Flow
 
-ScoutOff uses Stellar SEP-10 for wallet-based authentication.
+Promiscope uses Stellar SEP-10 for wallet-based authentication.
 The client proves ownership of a Stellar account by signing a server-issued challenge transaction.
 
 ## SEP-10 Server Keypair (`SEP10_SERVER_SECRET`)
 
 Every SEP-10 challenge transaction is signed by the server with a dedicated Stellar keypair.
-`verifyAndIssueToken` checks that the challenge carries this server signature before accepting the client's signature — this proves the challenge was issued by a trusted ScoutOff backend and not forged by a third party.
+`verifyAndIssueToken` checks that the challenge carries this server signature before accepting the client's signature — this proves the challenge was issued by a trusted Promiscope backend and not forged by a third party.
 
 ### Why it must be shared across all instances
 
@@ -126,7 +126,7 @@ The `verifyAndIssueToken` function enforces the following SEP-10 requirements:
    - `minTime` must not be in the future (with a 60-second grace window for clock skew)
    - `maxTime` must not have passed (challenge expired)
 4. **Operations** — Every operation must be of type `manageData`:
-   - The first operation must have name `scoutoff auth`
+   - The first operation must have name `promiscope auth`
    - The first operation's value must be exactly 64 bytes (the nonce)
    - The first operation must have the client account as its source
    - Any additional operations (e.g., `web_auth_domain`) must be sourced by the server account

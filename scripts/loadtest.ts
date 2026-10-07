@@ -111,7 +111,7 @@ function checkServer(): void {
 
 async function main(): Promise<void> {
   console.log('\n══════════════════════════════════════════════════');
-  console.log('  ScoutOff — Load Test');
+  console.log('  Promiscope — Load Test');
   console.log(`  Target:    ${TARGET}`);
   console.log(`  Duration:  ${DURATION}s per endpoint`);
   console.log(`  Connections: ${CONNECTIONS}`);

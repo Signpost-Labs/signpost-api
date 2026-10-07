@@ -12,7 +12,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET ?? "test-secret";
 //   • The database is automatically destroyed when the process exits.
 //
 // IMPORTANT: never override DB_PATH to a real file path in your local
-// environment when running tests.  Pointing tests at scout-off.db (or any
+// environment when running tests.  Pointing tests at promiscope.db (or any
 // other persistent file) will mix test data with development data, produce
 // non-deterministic results, and may corrupt your local database.
 process.env.DB_PATH = process.env.DB_PATH ?? ":memory:";

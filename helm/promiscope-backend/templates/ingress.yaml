@@ -2,10 +2,10 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "scout-off-backend.fullname" . }}
+  name: {{ include "promiscope-backend.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "scout-off-backend.labels" . | nindent 4 }}
+    {{- include "promiscope-backend.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -28,7 +28,7 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: {{ include "scout-off-backend.fullname" $ }}
+                name: {{ include "promiscope-backend.fullname" $ }}
                 port:
                   number: {{ $.Values.service.port }}
           {{- end }}

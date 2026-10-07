@@ -19,7 +19,7 @@ import {
 } from './betterSqlite3Error';
 import { ApiKeyLimitError, MAX_API_KEYS_PER_SCOUT, MAX_WEBHOOK_SUBSCRIPTIONS_PER_SCOUT, WebhookSubscriptionLimitError } from '../utils/scoutResourceLimits';
 
-const dbTracer = trace.getTracer('scout-off-backend');
+const dbTracer = trace.getTracer('promiscope-backend');
 
 /**
  * Thin wrapper that creates a DB span, runs fn(), sets ipfs.cid on success,

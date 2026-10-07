@@ -22,7 +22,7 @@ function main() {
     );
   }
 
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'scoutoff-client-'));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'promiscope-client-'));
   try {
     const generatedPath = path.join(tempDir, 'schema.d.ts');
     const cliPath = path.join(ROOT, 'node_modules', 'openapi-typescript', 'bin', 'cli.js');

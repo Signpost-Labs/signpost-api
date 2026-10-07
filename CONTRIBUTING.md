@@ -1,6 +1,8 @@
-# Contributing to ScoutOff Backend
+# Contributing to Promiscope Backend
 
 Welcome! This guide covers contribution workflows, code standards, and critical security practices including dependency management. All participants are expected to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+> **Product migration:** Promiscope is the community project accountability product. This backend still implements the former football scouting workflows; project, evidence, and community review APIs have not been built. The operational and API references below describe the legacy system until they are migrated.
 
 ## Table of Contents
 
@@ -35,8 +37,8 @@ Welcome! This guide covers contribution workflows, code standards, and critical 
 
 1. **Fork and Clone**
    ```bash
-   git clone https://github.com/scout-off/scout-off-backend.git
-   cd scout-off-backend
+   git clone https://github.com/promiscope/promiscope-backend.git
+   cd promiscope-backend
    # Pick up the correct Node version automatically (nvm/fnm/asdf)
    nvm use   # or: fnm use
    npm install
@@ -117,7 +119,7 @@ npm run seed
 npx ts-node --project tsconfig.scripts.json scripts/seed.ts
 ```
 
-This connects to the database at `DB_PATH` (default: `scout-off.db`),
+This connects to the database at `DB_PATH` (default: `promiscope.db`),
 runs any pending migrations, and inserts the sample rows described below.
 
 ### What gets seeded
@@ -190,7 +192,7 @@ To start from a clean slate, delete the SQLite database file and re-run
 the seed:
 
 ```bash
-rm scout-off.db   # or whatever DB_PATH points at in your .env
+rm promiscope.db   # or whatever DB_PATH points at in your .env
 npm run seed
 ```
 
@@ -552,7 +554,7 @@ Instead:
 
 Every GitHub issue should be labelled at creation time so maintainers can triage
 and route it instantly. This section is the single source of truth for the label
-taxonomy used across the ScoutOff backend repository.
+taxonomy used across the Promiscope backend repository.
 
 > **Cross-reference:** The README's [Issue Categories](README.md#issue-categories)
 > and [Priority Levels](README.md#priority-levels) tables summarise the same
@@ -664,7 +666,7 @@ We track ~125 active issues. Use these guidelines to help us prioritize efficien
 ### How to File a High-Quality Issue
 
 1. **Search Existing Issues First**  
-   Avoid duplicates: https://github.com/scout-off/scout-off-backend/issues
+   Avoid duplicates: https://github.com/promiscope/promiscope-backend/issues
 
 2. **Use a Clear Title**  
    ✅ *"Auth token expires before subscription ends"*  
@@ -720,11 +722,11 @@ consistent detail.
 
 ## Acknowledgments
 
-ScoutOff is part of the Drips funding wave program. Funded contributors receive support through the Drips platform. Visit [drips.network](https://drips.network) to learn about opportunities and register your interest.
+Promiscope is part of the Drips funding wave program. Funded contributors receive support through the Drips platform. Visit [drips.network](https://drips.network) to learn about opportunities and register your interest.
 
 ---
 
-**Thank you for contributing to ScoutOff!** Your work helps connect talented footballers with opportunities. 🙌
+**Thank you for contributing to Promiscope!** Focus new product work on project commitments, supporting evidence, progress updates, and community review. 🙌
 
 SHA: 22d84cc3bd4ad4e2b033604e4dfc3ac8ee365919
 MATCH: True

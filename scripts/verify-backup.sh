@@ -15,10 +15,10 @@
 #   MANIFEST_FILE     Optional path to SHA-256 manifest file for integrity verification
 #
 # Usage:
-#   ./scripts/verify-backup.sh /var/backups/scout-off/scout-off-20250720T120000Z.db
-#   ./scripts/verify-backup.sh s3://my-bucket/scout-off-backups/scout-off-20250720T120000Z.db
-#   COUNTS_FILE=/var/backups/scout-off/scout-off-20250720T120000Z.db.counts \
-#     ./scripts/verify-backup.sh /var/backups/scout-off/scout-off-20250720T120000Z.db
+#   ./scripts/verify-backup.sh /var/backups/promiscope/promiscope-20250720T120000Z.db
+#   ./scripts/verify-backup.sh s3://my-bucket/promiscope-backups/promiscope-20250720T120000Z.db
+#   COUNTS_FILE=/var/backups/promiscope/promiscope-20250720T120000Z.db.counts \
+#     ./scripts/verify-backup.sh /var/backups/promiscope/promiscope-20250720T120000Z.db
 #
 # Exit codes:
 #   0  Backup verified successfully

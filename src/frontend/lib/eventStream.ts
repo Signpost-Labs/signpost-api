@@ -1,7 +1,7 @@
 /**
  * eventStream.ts
  *
- * Shared SSE subscription manager for the ScoutOff frontend.
+ * Shared SSE subscription manager for the Promiscope frontend.
  *
  * Architecture — one EventSource per browser, zero per follower tab:
  *
@@ -38,10 +38,10 @@
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 /** Web Locks lock name shared across all tabs for leader election. */
-const LOCK_NAME = 'scout_off_sse_leader';
+const LOCK_NAME = 'promiscope_sse_leader';
 
 /** BroadcastChannel name shared across all tabs. */
-const CHANNEL_NAME = 'scout_off_sse';
+const CHANNEL_NAME = 'promiscope_sse';
 
 /** Base reconnect delay in milliseconds. */
 const BASE_RECONNECT_DELAY_MS = 1_000;
@@ -118,7 +118,7 @@ export class EventStreamManager {
 
   /**
    * @param url  Full URL of the SSE stream endpoint, e.g.
-   *             `https://api.scoutoff.io/api/events/stream` or
+   *             `https://api.promiscope.example/api/events/stream` or
    *             `/api/indexer/stream` (via Next.js proxy).
    */
   constructor(url: string) {

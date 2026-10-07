@@ -64,7 +64,7 @@ import {
 } from '../db';
 import { observeIpfsLatency, setStuckPendingPinsCount } from '../middleware/metrics';
 
-const tracer = trace.getTracer('scout-off-backend');
+const tracer = trace.getTracer('promiscope-backend');
 
 const PINATA_PIN_JSON_URL = 'https://api.pinata.cloud/pinning/pinJSONToIPFS';
 const PINATA_PIN_FILE_URL = 'https://api.pinata.cloud/pinning/pinFileToIPFS';

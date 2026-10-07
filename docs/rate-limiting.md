@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ScoutOff backend implements multi-dimensional rate limiting to protect against abuse while maintaining availability. Rate limits are applied across multiple namespaces (per-IP, per-wallet, per-endpoint) with configurable thresholds and window sizes.
+The Promiscope backend implements multi-dimensional rate limiting to protect against abuse while maintaining availability. Rate limits are applied across multiple namespaces (per-IP, per-wallet, per-endpoint) with configurable thresholds and window sizes.
 
 **Key design principle:** Rate limiting uses **fail-open** — if the rate limiter cannot make a decision (e.g., Redis connection down), requests are allowed through. This prioritizes availability over strict enforcement.
 

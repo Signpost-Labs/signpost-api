@@ -142,7 +142,7 @@ function fetchOnce(url: URL, pinned: ResolvedAddress, opts: Required<Omit<SafeFe
         path: url.pathname + url.search,
         method: 'GET',
         servername: net.isIP(url.hostname) ? undefined : url.hostname,
-        headers: { 'user-agent': 'scout-off-evidence-fetcher', accept: '*/*' },
+        headers: { 'user-agent': 'promiscope-evidence-fetcher', accept: '*/*' },
         // Pin the connection to the address we validated (defeats DNS rebinding).
         lookup: ((_host: string, lookupOpts: { all?: boolean }, cb: (...args: unknown[]) => void) => {
           if (lookupOpts?.all) cb(null, [pinned]);

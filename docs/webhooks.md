@@ -1,6 +1,6 @@
 # Webhooks
 
-This document describes how ScoutOff signs outbound event webhooks and how to
+This document describes how Promiscope signs outbound event webhooks and how to
 verify them, along with the dead-letter queue and admin replay flow for
 deliveries that exhaust their retries.
 
@@ -329,7 +329,7 @@ function isValidSignature(rawBody, timestamp, signatureHeader, secret) {
 app.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
   const signature = req.headers['x-webhook-signature'];
   const timestamp = req.headers['x-webhook-timestamp'];
-  if (!isValidSignature(req.body, timestamp, signature, process.env.SCOUTOFF_WEBHOOK_SECRET)) {
+  if (!isValidSignature(req.body, timestamp, signature, process.env.PROMISCOPE_WEBHOOK_SECRET)) {
     return res.status(401).send('invalid signature');
   }
 
@@ -425,9 +425,9 @@ subscriptions, and optionally notifies the platform-admin URL.
 
 Metrics (see `GET /metrics`):
 
-- `scout_off_webhook_dead_letters_total{subscription_id}` — gauge of current depth
-- `scout_off_webhook_dead_letters_inserted_total` — lifetime inserts
-- `scout_off_webhook_retry_success_total` — successful auto-retries
+- `promiscope_webhook_dead_letters_total{subscription_id}` — gauge of current depth
+- `promiscope_webhook_dead_letters_inserted_total` — lifetime inserts
+- `promiscope_webhook_retry_success_total` — successful auto-retries
 
 ## Secret Rotation
 
@@ -480,7 +480,7 @@ If you are using the legacy `WEBHOOK_URL` / `WEBHOOK_SECRET` environment-variabl
 2. Update `WEBHOOK_SECRET` in your environment to the new value.
 3. Restart the backend — the existing legacy subscription row is updated with the new secret
    on startup.
-4. Update `SCOUTOFF_WEBHOOK_SECRET` (or equivalent) on your receiver side.
+4. Update `PROMISCOPE_WEBHOOK_SECRET` (or equivalent) on your receiver side.
 
 ### Future improvement
 

@@ -12,7 +12,7 @@ import { discoverMigrationFiles, getAppliedMigrations, generateStatusReport, for
 async function main(): Promise<void> {
   try {
     // Load or default DB_PATH
-    const dbPath = process.env.DB_PATH || 'scout-off.db';
+    const dbPath = process.env.DB_PATH || 'promiscope.db';
 
     // Open database connection
     const db = new Database(dbPath);

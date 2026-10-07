@@ -171,7 +171,7 @@ log "Backup created: ${BACKUP_FILE}"
 log "Step 3: Restoring backup to fresh database"
 
 if [[ -z "${RESTORE_DEST}" ]]; then
-  RESTORE_DEST=$(mktemp /tmp/scout-off-restore-XXXXXX.db)
+  RESTORE_DEST=$(mktemp /tmp/promiscope-restore-XXXXXX.db)
 fi
 
 cp "${BACKUP_FILE}" "${RESTORE_DEST}" || fail "Failed to copy backup to restore destination"
@@ -259,7 +259,7 @@ log "Step 6: Starting application and checking health"
 # NOTE: these must match the exact names src/config.ts reads — DB_PATH (not
 # DATABASE_PATH) and STELLAR_HEALTH_CHECK (not STELLAR_HEALTH_CHECK_ENABLED).
 # Using the wrong names silently no-ops them: the app would fall back to its
-# default DB path (scout-off.db) instead of the restored/migrated
+# default DB path (promiscope.db) instead of the restored/migrated
 # RESTORE_DEST, and would leave the real Stellar health check enabled.
 export DB_PATH="${RESTORE_DEST}"
 export NODE_ENV=test

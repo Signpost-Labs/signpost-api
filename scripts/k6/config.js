@@ -1,7 +1,7 @@
 /**
  * scripts/k6/config.js
  *
- * Shared configuration for the ScoutOff k6 load-test suite.
+ * Shared configuration for the Promiscope k6 load-test suite.
  *
  * Environment variables (all optional — sensible defaults provided):
  *   K6_BASE_URL       Base URL of the server under test (default: http://localhost:4000)

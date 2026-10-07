@@ -1,5 +1,5 @@
 /**
- * scripts/k6/suite.js — ScoutOff k6 load-test suite entry-point
+ * scripts/k6/suite.js — Promiscope k6 load-test suite entry-point
  *
  * Runs all 6 scenarios as named k6 executors (ramping-vus style) so each
  * scenario runs concurrently with independent VU pools and threshold sets.
@@ -11,7 +11,7 @@
  *   k6 run scripts/k6/suite.js --env K6_SCENARIO=player_list
  *
  * Usage (CI against staging):
- *   K6_BASE_URL=https://staging.scoutoff.io \
+ *   K6_BASE_URL=https://staging.promiscope.example \
  *   TEST_ADMIN_JWT=eyJ... TEST_SCOUT_JWT=eyJ... \
  *   k6 run scripts/k6/suite.js
  *
@@ -156,7 +156,7 @@ export const options = {
 // ── Lifecycle hooks ───────────────────────────────────────────────────────────
 
 export function setup() {
-  console.log(`[k6] ScoutOff load test suite starting`);
+  console.log(`[k6] Promiscope load test suite starting`);
   console.log(`[k6] Target: ${__ENV.K6_BASE_URL || 'http://localhost:4000'}`);
   if (SELECTED) console.log(`[k6] Running single scenario: ${SELECTED}`);
 }

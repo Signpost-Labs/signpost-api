@@ -119,7 +119,7 @@ The indexer lag is also exposed via the `/metrics` endpoint as a gauge metric. Y
 indexer_ledger_lag
 
 # Readiness status (derived from HTTP response)
-up{job="scout-off-backend", probe="readiness"}
+up{job="promiscope-backend", probe="readiness"}
 ```
 
 ## Troubleshooting

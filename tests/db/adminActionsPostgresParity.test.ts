@@ -15,9 +15,9 @@
  * it is skipped (not failed) when that isn't set, since CI does not run a
  * Postgres service for this suite. To run it locally:
  *
- *   docker run -d -e POSTGRES_PASSWORD=test -e POSTGRES_DB=scoutoff_test \
+ *   docker run -d -e POSTGRES_PASSWORD=test -e POSTGRES_DB=promiscope_test \
  *     -p 15432:5432 postgres:16-alpine
- *   POSTGRES_TEST_URL=postgres://postgres:test@127.0.0.1:15432/scoutoff_test \
+ *   POSTGRES_TEST_URL=postgres://postgres:test@127.0.0.1:15432/promiscope_test \
  *     npx jest tests/db/adminActionsPostgresParity.test.ts
  *
  * Note: this test talks to Postgres with a plain `pg.Client` (awaited

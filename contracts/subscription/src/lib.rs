@@ -1,6 +1,6 @@
 #![no_std]
 
-use scout_off_shared::{
+use promiscope_shared::{
     errors::Error,
     events::{emit_contact_unlocked, emit_scout_subscribed},
     storage::{bump_instance, is_initialized, is_paused, set_initialized},
@@ -415,7 +415,7 @@ impl SubscriptionContract {
         if admin != stored_admin {
             return Err(Error::Unauthorized);
         }
-        scout_off_shared::storage::set_paused(&env, true);
+        promiscope_shared::storage::set_paused(&env, true);
         bump_instance(&env);
         Ok(())
     }
@@ -441,7 +441,7 @@ impl SubscriptionContract {
         if admin != stored_admin {
             return Err(Error::Unauthorized);
         }
-        scout_off_shared::storage::set_paused(&env, false);
+        promiscope_shared::storage::set_paused(&env, false);
         bump_instance(&env);
         Ok(())
     }
@@ -578,7 +578,7 @@ mod tests {
         // Storage access is only permitted from within a contract's own
         // execution context — wrap the direct storage write accordingly.
         env.as_contract(&client.address, || {
-            scout_off_shared::storage::set_paused(&env, true);
+            promiscope_shared::storage::set_paused(&env, true);
         });
         let scout = Address::generate(&env);
         fund(&env, &token, &admin, &scout, 1_000_000_000_000i128);

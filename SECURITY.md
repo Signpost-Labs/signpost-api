@@ -39,12 +39,12 @@ revised timeline to the reporter within the original response window.
 
 **Do NOT open a public GitHub Issue for security vulnerabilities.** GitHub
 Issues are publicly visible — posting exploit details before a fix is deployed
-puts all ScoutOff users at risk.
+puts all Promiscope users at risk.
 
 ### Private Disclosure Process
 
 1. **Email the maintainers** at the address listed on the
-   [ScoutOff GitHub profile](https://github.com/scout-off) or in the repository's
+   [Promiscope GitHub profile](https://github.com/promiscope) or in the repository's
    `package.json` `"author"` field.
 2. **Include the following in your report:**
    - A clear description of the vulnerability and the affected component.
@@ -101,7 +101,7 @@ for the full checklist.
 
 ## Acknowledgements
 
-We thank all responsible security researchers who help keep ScoutOff safe.
+We thank all responsible security researchers who help keep Promiscope safe.
 Reporters who follow this policy will be credited in the relevant release notes
 (unless they request anonymity).
 

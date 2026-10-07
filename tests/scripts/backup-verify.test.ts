@@ -73,8 +73,8 @@ const isWindows = process.platform === 'win32';
   let backupDir: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'scout-off-backup-'));
-    dbPath = path.join(tmpDir, 'scout-off.db');
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'promiscope-backup-'));
+    dbPath = path.join(tmpDir, 'promiscope.db');
     backupDir = path.join(tmpDir, 'backups');
     createTestDatabase(dbPath);
   });

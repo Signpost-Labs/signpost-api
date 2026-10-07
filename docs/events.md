@@ -53,7 +53,7 @@ Response codes:
 // Node.js — headers-capable SSE client
 const EventSource = require('eventsource');
 
-const es = new EventSource('https://api.scoutoff.example/api/events/stream', {
+const es = new EventSource('https://api.promiscope.example/api/events/stream', {
   headers: { Authorization: `Bearer ${jwt}` },
 });
 

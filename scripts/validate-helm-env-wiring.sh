@@ -35,8 +35,8 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
-CHART_DIR="${REPO_ROOT}/helm/scout-off-backend"
-RELEASE="scout-off-env-wiring-test"
+CHART_DIR="${REPO_ROOT}/helm/promiscope-backend"
+RELEASE="promiscope-env-wiring-test"
 
 fail() {
   echo "[validate-helm-env-wiring] FAIL: $*" >&2
@@ -63,7 +63,7 @@ trap 'rm -rf "${TMPDIR_HELM}"' EXIT
 VALUES_OVERRIDE="${TMPDIR_HELM}/test-values.yaml"
 cat > "${VALUES_OVERRIDE}" <<'EOF'
 # Synthetic overrides for env-wiring validation — not for real deployments.
-secretName: scout-off-secrets
+secretName: promiscope-secrets
 env:
   NODE_ENV: production
   PORT: "4000"
@@ -73,9 +73,9 @@ env:
   SOROBAN_RPC_URL: https://soroban-rpc.mainnet.stellar.gateway.fm
   LOG_LEVEL: info
   DB_DRIVER: sqlite
-  DB_PATH: /data/scout-off.db
+  DB_PATH: /data/promiscope.db
   PLATFORM_FEE_BPS: "500"
-  CORS_ALLOWED_ORIGINS: "https://app.scoutoff.io,https://scoutoff.io"
+  CORS_ALLOWED_ORIGINS: "https://app.promiscope.example,https://promiscope.example"
   SUBSCRIPTION_GRACE_PERIOD_HOURS: "24"
   TRUSTED_PROXY_COUNT: "1"
   WEBHOOK_ENABLED: "false"

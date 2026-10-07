@@ -18,8 +18,8 @@ export const FIELD_CIPHER_VERSION = 'v1';
 export type FieldCipherPurpose = 'webhook' | 'notes';
 
 const INSECURE_DEV_KEYS: Record<FieldCipherPurpose, Buffer> = {
-  webhook: crypto.createHash('sha256').update('scout-off-insecure-dev-only-webhook-key').digest(),
-  notes: crypto.createHash('sha256').update('scout-off-insecure-dev-only-notes-key').digest(),
+  webhook: crypto.createHash('sha256').update('promiscope-insecure-dev-only-webhook-key').digest(),
+  notes: crypto.createHash('sha256').update('promiscope-insecure-dev-only-notes-key').digest(),
 };
 
 const warnedInsecure: Partial<Record<FieldCipherPurpose, boolean>> = {};

@@ -9,7 +9,7 @@ import {
   server,
 } from './stellarCore';
 
-const tracer = trace.getTracer('scout-off-backend');
+const tracer = trace.getTracer('promiscope-backend');
 
 export interface FeeWithdrawalResult {
   transactionId: string;

@@ -16,7 +16,7 @@ on:
       base_url:
         description: 'Base URL of the target server'
         required: false
-        default: 'https://staging.scoutoff.io'
+        default: 'https://staging.promiscope.example'
 
 # Never run two load tests at the same time — concurrent runs would distort
 # results and could overwhelm the staging environment.
@@ -32,7 +32,7 @@ jobs:
     env:
       # Resolve target URL: manual-dispatch input takes priority over the
       # default staging URL.  The nightly schedule always hits staging.
-      K6_BASE_URL: ${{ github.event.inputs.base_url || 'https://staging.scoutoff.io' }}
+      K6_BASE_URL: ${{ github.event.inputs.base_url || 'https://staging.promiscope.example' }}
       K6_SCENARIO: ${{ github.event.inputs.scenario || '' }}
 
     steps:

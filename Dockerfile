@@ -38,9 +38,9 @@ FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18
 ARG GIT_COMMIT=unknown
 ARG VERSION=1.0.0
 ARG BUILD_DATE=""
-ARG SOURCE=https://github.com/scout-off/scout-off-backend
-ARG TITLE="scout-off-backend"
-ARG DESCRIPTION="Backend API for ScoutOff — decentralized football scouting platform on Stellar"
+ARG SOURCE=https://github.com/promiscope/promiscope-backend
+ARG TITLE="promiscope-backend"
+ARG DESCRIPTION="Backend API for Promiscope — decentralized football scouting platform on Stellar"
 ARG LICENSES="Apache-2.0"
 
 # OCI Image Spec annotations (https://github.com/opencontainers/image-spec/blob/main/annotations.md)
@@ -79,7 +79,7 @@ USER appuser
 EXPOSE 4000
 
 # Set default DB path to the /data volume mount
-ENV DB_PATH=/data/scout-off.db \
+ENV DB_PATH=/data/promiscope.db \
     NODE_ENV=production \
     PORT=4000 \
     GIT_COMMIT=$GIT_COMMIT

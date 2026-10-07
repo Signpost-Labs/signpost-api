@@ -332,7 +332,7 @@ async function seed(): Promise<void> {
     if (seedPlayers)       allowedEventTypes.add('player_registered');
   }
 
-  console.log('🌱  ScoutOff seed starting…\n');
+  console.log('🌱  Promiscope seed starting…\n');
   if (only !== null) {
     console.log(`  Seeding only: ${[...only].join(', ') || '(nothing requested)'}\n`);
   }

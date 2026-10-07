@@ -1,4 +1,4 @@
-# ScoutOff Backend API Documentation
+# Promiscope Backend API Documentation
 
 All endpoints are served from the base URL configured via `PORT` (default: `4000`).
 

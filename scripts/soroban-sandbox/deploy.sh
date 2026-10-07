@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build, deploy, and initialize all five ScoutOff Soroban contracts on a local
+# Build, deploy, and initialize all five Promiscope Soroban contracts on a local
 # network (#1117). Writes scripts/soroban-sandbox/.env.contracts for the E2E suite.
 set -euo pipefail
 

@@ -154,7 +154,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: scout_off_ci
+          POSTGRES_DB: promiscope_ci
         ports:
           - 5432:5432
         options: >-
@@ -180,8 +180,8 @@ jobs:
         run: npm run test:postgres
         env:
           DB_DRIVER: postgres
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/scout_off_ci
-          POSTGRES_TEST_URL: postgres://postgres:postgres@localhost:5432/scout_off_ci
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/promiscope_ci
+          POSTGRES_TEST_URL: postgres://postgres:postgres@localhost:5432/promiscope_ci
           CONTRACT_ID: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4
 
   redis-integration:
@@ -304,7 +304,7 @@ jobs:
             --build-arg GIT_COMMIT=${{ github.sha }} \
             --build-arg VERSION="${VERSION}" \
             --build-arg BUILD_DATE="${BUILD_DATE}" \
-            --tag scout-off-backend:ci \
+            --tag promiscope-backend:ci \
             .
 
       - name: Scan Docker image for vulnerabilities
@@ -313,7 +313,7 @@ jobs:
         # cannot be silently re-pointed the way a tag can.
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: scout-off-backend:ci
+          image-ref: promiscope-backend:ci
           format: table
           exit-code: '1'
           ignore-unfixed: true
@@ -325,7 +325,7 @@ jobs:
           commit=$(docker run --rm \
             -e CONTRACT_ID=CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4 \
             -e JWT_SECRET=test-secret-min-32-chars-for-ci-only \
-            scout-off-backend:ci \
+            promiscope-backend:ci \
             node -e "console.log(process.env.GIT_COMMIT)")
           echo "GIT_COMMIT in image: $commit"
           test "$commit" = "${{ github.sha }}"
@@ -334,14 +334,14 @@ jobs:
         run: |
           # Run the container with test env vars, binding port 4000
           docker run --rm -d \
-            --name scout-off-ci \
+            --name promiscope-ci \
             -p 4000:4000 \
             -e NODE_ENV=test \
             -e PORT=4000 \
-            -e DB_PATH=/data/scout-off.db \
+            -e DB_PATH=/data/promiscope.db \
             -e CONTRACT_ID=CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4 \
             -e JWT_SECRET=test-secret-min-32-chars-for-ci-only \
-            scout-off-backend:ci
+            promiscope-backend:ci
           
           # Wait for the app to become healthy
           attempt=0
@@ -354,8 +354,8 @@ jobs:
             fi
             if [ $attempt -eq $((max_attempts - 1)) ]; then
               echo "✗ Server failed to become healthy within ${max_attempts}s"
-              docker logs scout-off-ci
-              docker stop scout-off-ci || true
+              docker logs promiscope-ci
+              docker stop promiscope-ci || true
               exit 1
             fi
             sleep 1
@@ -367,8 +367,8 @@ jobs:
             status=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:4000${endpoint}")
             if [ "$status" != "200" ]; then
               echo "✗ ${endpoint} returned ${status}, expected 200"
-              docker logs scout-off-ci
-              docker stop scout-off-ci || true
+              docker logs promiscope-ci
+              docker stop promiscope-ci || true
               exit 1
             fi
             echo "✓ ${endpoint} returned 200"
@@ -384,17 +384,17 @@ jobs:
             echo "✓ DB-backed endpoint /api/players responded with HTTP $status (DB accessible)"
           else
             echo "✗ /api/players returned ${status}, expected 401 or 200"
-            docker logs scout-off-ci
-            docker stop scout-off-ci || true
+            docker logs promiscope-ci
+            docker stop promiscope-ci || true
             exit 1
           fi
 
           # Get image size for regression detection
-          image_size=$(docker images --no-trunc --quiet scout-off-backend:ci | xargs docker inspect -f '{{.Size}}')
+          image_size=$(docker images --no-trunc --quiet promiscope-backend:ci | xargs docker inspect -f '{{.Size}}')
           image_size_mb=$((image_size / 1024 / 1024))
           echo "Docker image size: ${image_size_mb}MB"
           
-          docker stop scout-off-ci
+          docker stop promiscope-ci
           
           # Fail if image grew by >10% from a baseline (this is a soft check; adjust as needed)
           # For now just report it; future PRs can establish a baseline

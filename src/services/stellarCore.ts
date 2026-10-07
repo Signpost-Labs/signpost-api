@@ -18,7 +18,7 @@ import { getRequestSignal } from '../utils/requestContext';
 import { stellarBreaker } from '../utils/circuitBreaker';
 import { getPlayerById } from '../db';
 
-const tracer = trace.getTracer('scout-off-backend');
+const tracer = trace.getTracer('promiscope-backend');
 
 const rawServer = new rpc.Server(config.sorobanRpcUrl, {
   allowHttp: config.sorobanRpcUrl.startsWith('http://'),

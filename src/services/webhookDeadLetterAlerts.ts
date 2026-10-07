@@ -1,7 +1,7 @@
 /**
  * Dead-letter queue depth / insert-rate alerting (#1131).
  *
- * Exports a per-subscription gauge (`scout_off_webhook_dead_letters_total`) and
+ * Exports a per-subscription gauge (`promiscope_webhook_dead_letters_total`) and
  * evaluates configurable size + rate thresholds during the retry job sweep.
  */
 

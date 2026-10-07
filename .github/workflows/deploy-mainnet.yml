@@ -1,4 +1,4 @@
-# Deploy ScoutOff backend to mainnet.
+# Deploy Promiscope backend to mainnet.
 #
 # Triggers:
 #   • Push to main with a commit message that starts with "[deploy-mainnet]"
@@ -11,8 +11,8 @@
 #   MAINNET_HOST              — mainnet server hostname or IP
 #   MAINNET_SSH_USER          — SSH user for deployment
 #   MAINNET_SSH_PRIVATE_KEY   — private key for SSH/SCP (PEM)
-#   MAINNET_DEPLOY_PATH       — absolute path on the server (e.g. /var/www/scout-off-mainnet)
-#   MAINNET_URL               — public mainnet base URL (e.g. https://api.scoutoff.io)
+#   MAINNET_DEPLOY_PATH       — absolute path on the server (e.g. /var/www/promiscope-mainnet)
+#   MAINNET_URL               — public mainnet base URL (e.g. https://api.promiscope.example)
 #   WEBHOOK_SECRET_ENCRYPTION_KEY — key used by reencrypt-webhook-secrets.js
 #   NOTIFY_WEBHOOK_URL        — (optional) Slack/Discord webhook for deploy notifications
 #

@@ -25,7 +25,7 @@ export function initTracing(): void {
 
   sdk = new NodeSDK({
     traceExporter: new OTLPTraceExporter({ url: `${endpoint}/v1/traces` }),
-    serviceName: process.env.OTEL_SERVICE_NAME ?? 'scout-off-backend',
+    serviceName: process.env.OTEL_SERVICE_NAME ?? 'promiscope-backend',
     instrumentations: [
       getNodeAutoInstrumentations({
         // disable noisy FS instrumentation
@@ -48,5 +48,5 @@ export async function shutdownTracing(): Promise<void> {
  * emitted.  Safe to call from any module without guarding.
  */
 export function getTracer() {
-  return trace.getTracer('scout-off-backend');
+  return trace.getTracer('promiscope-backend');
 }

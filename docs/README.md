@@ -1,7 +1,7 @@
 # Documentation Index
 
 This directory holds the operator-facing and contributor-facing documentation
-for the ScoutOff backend. It exists so that finding the right doc is a lookup,
+for the Promiscope backend. It exists so that finding the right doc is a lookup,
 not a directory listing.
 
 > **For contributors:** when you add a new `docs/*.md` file, add it to this

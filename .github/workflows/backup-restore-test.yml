@@ -50,7 +50,7 @@ jobs:
       - name: Run backup-restore smoke test
         run: bash scripts/backup-restore-smoke-test.sh
         env:
-          DB_PATH: /tmp/scout-off-test.db
+          DB_PATH: /tmp/promiscope-test.db
           BACKUP_DEST: /tmp/backups
           NODE_ENV: test
           LOG_LEVEL: error
@@ -121,7 +121,7 @@ jobs:
         if: steps.check-creds.outputs.configured == 'true'
         run: |
           # Get the most recent backup from S3
-          LATEST_BACKUP=$(aws s3 ls s3://${{ secrets.BACKUP_S3_BUCKET }}/scout-off-backups/ \
+          LATEST_BACKUP=$(aws s3 ls s3://${{ secrets.BACKUP_S3_BUCKET }}/promiscope-backups/ \
             | grep '\.db$' \
             | sort -r \
             | head -1 \
@@ -136,10 +136,10 @@ jobs:
           
           # Download the backup
           mkdir -p /tmp/s3-restore
-          aws s3 cp "s3://${{ secrets.BACKUP_S3_BUCKET }}/scout-off-backups/${LATEST_BACKUP}" /tmp/s3-restore/backup.db
+          aws s3 cp "s3://${{ secrets.BACKUP_S3_BUCKET }}/promiscope-backups/${LATEST_BACKUP}" /tmp/s3-restore/backup.db
           
           # Download the counts sidecar if it exists
-          aws s3 cp "s3://${{ secrets.BACKUP_S3_BUCKET }}/scout-off-backups/${LATEST_BACKUP}.counts" /tmp/s3-restore/backup.counts || true
+          aws s3 cp "s3://${{ secrets.BACKUP_S3_BUCKET }}/promiscope-backups/${LATEST_BACKUP}.counts" /tmp/s3-restore/backup.counts || true
           
           # Verify the backup
           bash scripts/verify-backup.sh /tmp/s3-restore/backup.db \
@@ -210,7 +210,7 @@ jobs:
         if: steps.check-creds.outputs.configured == 'true'
         run: |
           # Get the most recent backup from GCS
-          LATEST_BACKUP=$(gsutil ls gs://${{ secrets.BACKUP_GCS_BUCKET }}/scout-off-backups/*.db 2>/dev/null | sort -r | head -1)
+          LATEST_BACKUP=$(gsutil ls gs://${{ secrets.BACKUP_GCS_BUCKET }}/promiscope-backups/*.db 2>/dev/null | sort -r | head -1)
           
           if [[ -z "${LATEST_BACKUP}" ]]; then
             echo "No backups found in GCS bucket"

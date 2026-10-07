@@ -109,8 +109,8 @@ function makeStubCli(
   let backupPath: string;
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'scout-off-717-'));
-    dbPath = path.join(tmpDir, 'scout-off.db');
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'promiscope-717-'));
+    dbPath = path.join(tmpDir, 'promiscope.db');
     backupDir = path.join(tmpDir, 'backups');
     createTestDatabase(dbPath);
 
@@ -157,7 +157,7 @@ function makeStubCli(
       'RequestError: send request failed — connection refused'
     );
 
-    const fakeS3Sidecar = 's3://my-bucket/backups/scout-off-20250101T000000Z.db.counts';
+    const fakeS3Sidecar = 's3://my-bucket/backups/promiscope-20250101T000000Z.db.counts';
 
     const { stderr, stdout } = runScriptExpectFailure(VERIFY_SCRIPT, [backupPath], {
       COUNTS_FILE: fakeS3Sidecar,
@@ -177,7 +177,7 @@ function makeStubCli(
     // Stub `aws` to simulate a 404 / NoSuchKey response.
     const stubPath = makeStubCli(binDir, 'aws', 1, 'An error occurred (NoSuchKey) when calling the CopyObject operation');
 
-    const fakeS3Sidecar = 's3://my-bucket/backups/scout-off-old.db.counts';
+    const fakeS3Sidecar = 's3://my-bucket/backups/promiscope-old.db.counts';
 
     // Should succeed — treats NoSuchKey as "sidecar absent, skip silently".
     const output = runScript(VERIFY_SCRIPT, [backupPath], {
@@ -195,7 +195,7 @@ function makeStubCli(
     // Stub `gsutil` to simulate a permission/network error.
     const stubPath = makeStubCli(binDir, 'gsutil', 1, 'AccessDeniedException: 403 Forbidden');
 
-    const fakeGCSSidecar = 'gs://my-bucket/backups/scout-off-20250101T000000Z.db.counts';
+    const fakeGCSSidecar = 'gs://my-bucket/backups/promiscope-20250101T000000Z.db.counts';
 
     const { stderr, stdout } = runScriptExpectFailure(VERIFY_SCRIPT, [backupPath], {
       COUNTS_FILE: fakeGCSSidecar,

@@ -1,6 +1,6 @@
 #![no_std]
 
-use scout_off_shared::{
+use promiscope_shared::{
     errors::Error,
     storage::{
         add_authorized_updater, bump_instance, get_authorized_updaters, is_authorized_updater,

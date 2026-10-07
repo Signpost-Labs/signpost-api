@@ -1,21 +1,21 @@
-# ScoutOff TypeScript API client
+# Promiscope TypeScript API client
 
-`@scoutoff/api-client` is the versioned TypeScript client for the ScoutOff
+`@promiscope/api-client` is the versioned TypeScript client for the Promiscope
 REST API. Its request types are generated from the repository's canonical
 OpenAPI document; the package version matches `info.version` in
 `src/openapi.yaml`.
 
 ## Install and use
 
-Install `@scoutoff/api-client` from the package registry after its first
+Install `@promiscope/api-client` from the package registry after its first
 release. To build and use the checked-in package locally, run
 `npm run build:client`, then install it with `npm install ./clients/typescript`.
 
 ```ts
-import { createScoutOffClient } from '@scoutoff/api-client';
+import { createPromiscopeClient } from '@promiscope/api-client';
 
-const client = createScoutOffClient({
-  baseUrl: 'https://api.scoutoff.io/api',
+const client = createPromiscopeClient({
+  baseUrl: 'https://api.promiscope.example/api',
   accessToken: 'your-access-token',
 });
 

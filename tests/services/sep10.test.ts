@@ -59,7 +59,7 @@ describe('sep10', () => {
     })
       .addOperation(
         Operation.manageData({
-          name: 'scoutoff auth',
+          name: 'promiscope auth',
           value: crypto.randomBytes(48).toString('base64'),
           source: clientKeypair.publicKey(),
         })
@@ -87,7 +87,7 @@ describe('sep10', () => {
       })
         .addOperation(
           Operation.manageData({
-            name: 'scoutoff auth',
+            name: 'promiscope auth',
             value: crypto.randomBytes(48).toString('base64'),
             source: clientKeypair.publicKey(),
           })
@@ -114,7 +114,7 @@ describe('sep10', () => {
       })
         .addOperation(
           Operation.manageData({
-            name: 'scoutoff auth',
+            name: 'promiscope auth',
             value: crypto.randomBytes(48).toString('base64'),
             source: clientKeypair.publicKey(),
           })
@@ -140,7 +140,7 @@ describe('sep10', () => {
       })
         .addOperation(
           Operation.manageData({
-            name: 'scoutoff auth',
+            name: 'promiscope auth',
             value: crypto.randomBytes(48).toString('base64'),
             source: clientKeypair.publicKey(),
           })
@@ -169,7 +169,7 @@ describe('sep10', () => {
       })
         .addOperation(
           Operation.manageData({
-            name: 'scoutoff auth',
+            name: 'promiscope auth',
             value: crypto.randomBytes(48).toString('base64'),
             source: clientKeypair.publicKey(),
           })
@@ -198,7 +198,7 @@ describe('sep10', () => {
       })
         .addOperation(
           Operation.manageData({
-            name: 'scoutoff auth',
+            name: 'promiscope auth',
             value: crypto.randomBytes(48).toString('base64'),
             source: clientKeypair.publicKey(),
           })
@@ -230,7 +230,7 @@ describe('sep10', () => {
       })
         .addOperation(
           Operation.manageData({
-            name: 'scoutoff auth',
+            name: 'promiscope auth',
             value: crypto.randomBytes(48).toString('base64'),
             source: clientKeypair.publicKey(),
           })
@@ -295,7 +295,7 @@ describe('sep10', () => {
       expect(() => verifyChallenge(xdr)).toThrow('Invalid challenge: operation 0 must be manageData');
     });
 
-    it('throws when operation name does not match "scoutoff auth"', () => {
+    it('throws when operation name does not match "promiscope auth"', () => {
       const serverKeypair = getServerKeypair();
       const serverAccount = new Account(serverKeypair.publicKey(), '-1');
       const tx = new TransactionBuilder(serverAccount, {
@@ -328,7 +328,7 @@ describe('sep10', () => {
       })
         .addOperation(
           Operation.manageData({
-            name: 'scoutoff auth',
+            name: 'promiscope auth',
             value: null, // Explicitly no nonce
             source: clientKeypair.publicKey(),
           })
@@ -352,7 +352,7 @@ describe('sep10', () => {
       })
         .addOperation(
           Operation.manageData({
-            name: 'scoutoff auth',
+            name: 'promiscope auth',
             value: Buffer.from('too-short'), // 9 bytes instead of 64
             source: clientKeypair.publicKey(),
           })
@@ -376,7 +376,7 @@ describe('sep10', () => {
       })
         .addOperation(
           Operation.manageData({
-            name: 'scoutoff auth',
+            name: 'promiscope auth',
             value: crypto.randomBytes(48).toString('base64'),
             // No source specified - defaults to undefined
           })

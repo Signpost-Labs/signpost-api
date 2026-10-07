@@ -1,6 +1,6 @@
 # API Documentation Pipeline
 
-This document describes how ScoutOff's API documentation is generated, why the route source is the canonical source of truth, and the annotation format to use when adding or changing a route. See #1047 for the audit that motivated this.
+This document describes how Promiscope's API documentation is generated, why the route source is the canonical source of truth, and the annotation format to use when adding or changing a route. See #1047 for the audit that motivated this.
 
 ## The problem this replaces
 

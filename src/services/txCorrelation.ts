@@ -20,7 +20,7 @@ import { getDb } from '../db';
 import { getCorrelationId, requestContext } from '../utils/requestContext';
 import { logger } from '../utils/logger';
 
-const tracer = trace.getTracer('scout-off-backend');
+const tracer = trace.getTracer('promiscope-backend');
 
 /** Stellar text memos are capped at 28 bytes. */
 export const CORRELATION_MEMO_MAX_BYTES = 28;
