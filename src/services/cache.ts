@@ -70,8 +70,7 @@ export const INVALIDATION_MESSAGE = JSON.stringify({
 const DEFAULT_MAX_CACHE_SIZE = 1000;
 
 function getMaxCacheSize(): number {
-  const configured = Number(process.env.PLAYER_CACHE_MAX_SIZE);
-  return Number.isInteger(configured) && configured > 0 ? configured : DEFAULT_MAX_CACHE_SIZE;
+  return config.playerCacheMaxSize;
 }
 
 /**
