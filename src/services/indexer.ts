@@ -42,14 +42,14 @@ const approvedMilestones: Array<{ type: string; payload: unknown }> = [];
 /** Current indexer lag in ledgers (latestChainLedger - lastIndexedLedger). Reset after each poll. */
 export let indexerLedgerLag = 0;
 
-/** Threshold in ledgers above which a warning is logged. Configurable via INDEXER_LAG_WARN_THRESHOLD. */
+/** Threshold in ledgers above which a warning is logged. */
 function getLagWarnThreshold(): number {
-  return parseInt(process.env.INDEXER_LAG_WARN_THRESHOLD ?? '100', 10);
+  return config.indexerLagWarnThreshold;
 }
 
 /** Configurable finality margin delays treating the most recent N ledgers as immutable. */
 function getFinalityMargin(): number {
-  return parseInt(process.env.INDEXER_FINALITY_MARGIN ?? '10', 10);
+  return config.indexerFinalityMargin;
 }
 
 // ─── Payload normalisation ────────────────────────────────────────────────────
