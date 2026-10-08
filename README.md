@@ -13,6 +13,10 @@ The service starts in `src/index.ts`, builds its Express application in `src/app
 - `clients/typescript/` — generated typed API client.
 - `docs/` — authentication, data model, operations, and API references.
 
+## How the project uses Stellar
+
+The current accountability flow uses SEP-10 wallet authentication in the frontend to attribute publishing and updates to a Stellar address. The existing Soroban contracts and event indexer support the prior product domain; they do not currently store accountability projects, evidence, or community reviews. The new project records are off-chain, and this API has not yet been migrated to serve them. Backend support is tracked in [issue #13](https://github.com/Stellar-Promiscope/promiscope-backend/issues/13). Future Soroban anchoring of revision hashes is under design and would attest to a published hash and time, not prove a project's claims.
+
 ## Environment configuration
 
 Copy `.env.example` to `.env`; its comments define defaults, accepted values, and production requirements. The main groups are Stellar (`NETWORK`, `HORIZON_URL`, `SOROBAN_RPC_URL`, contract IDs), auth (`JWT_SECRET`, SEP-10 and API-key settings), database (`DB_DRIVER`, `DB_PATH` or `DATABASE_URL`), IPFS (`PINATA_API_KEY`, `PINATA_SECRET`), and runtime/security settings (`PORT`, CORS, rate limits, logging). Use separate secrets per environment and never commit `.env`.
