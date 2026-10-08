@@ -1,6 +1,6 @@
-# Promiscope Backend — Stellar Community Project Accountability
+# Promiscope Backend — API for Community Project Accountability on Stellar
 
-Promiscope is a community project accountability platform concept. The current API is a mature Node.js service, but its routes and data models still serve the prior product domain; project commitments, evidence submissions, and community review are not implemented yet.
+Promiscope helps communities track project commitments, milestones, updates, evidence, and responses. The frontend currently authenticates publishers with Stellar SEP-10 and stores accountability records off-chain. This Node.js API and its Soroban indexer still serve the previous product; accountability API support is planned and tracked in [issue #13](https://github.com/Stellar-Promiscope/promiscope-backend/issues/13).
 
 ## Architecture and tree
 
@@ -15,7 +15,7 @@ The service starts in `src/index.ts`, builds its Express application in `src/app
 
 ## How the project uses Stellar
 
-The current accountability flow uses SEP-10 wallet authentication in the frontend to attribute publishing and updates to a Stellar address. The existing Soroban contracts and event indexer support the prior product domain; they do not currently store accountability projects, evidence, or community reviews. The new project records are off-chain, and this API has not yet been migrated to serve them. Backend support is tracked in [issue #13](https://github.com/Stellar-Promiscope/promiscope-backend/issues/13). Future Soroban anchoring of revision hashes is under design and would attest to a published hash and time, not prove a project's claims.
+Stellar SEP-10 provides wallet authentication in the current frontend flow. Existing Soroban contracts and the event indexer support the previous product; they do not yet store accountability projects, evidence, or community responses. A future Soroban revision anchor is under design and would attest to a record hash and timestamp, not prove the record's claims.
 
 ## Environment configuration
 
