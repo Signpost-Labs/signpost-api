@@ -41,7 +41,7 @@ ARG BUILD_DATE=""
 ARG SOURCE=https://github.com/promiscope/promiscope-backend
 ARG TITLE="promiscope-backend"
 ARG DESCRIPTION="Backend API for Promiscope — decentralized football scouting platform on Stellar"
-ARG LICENSES="Apache-2.0"
+ARG LICENSES="NOASSERTION"
 
 # OCI Image Spec annotations (https://github.com/opencontainers/image-spec/blob/main/annotations.md)
 LABEL org.opencontainers.image.title="${TITLE}" \
