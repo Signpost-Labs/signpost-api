@@ -1,4 +1,4 @@
-# Promiscope Backend
+# Promiscope Backend — Stellar Community Project Accountability
 
 Promiscope is a community project accountability platform concept. The current API is a mature Node.js service, but its routes and data models still serve the prior product domain; project commitments, evidence submissions, and community review are not implemented yet.
 
