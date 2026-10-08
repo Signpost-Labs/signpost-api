@@ -49,41 +49,36 @@ const MAX_ALLOWED_CATCHUP_BATCH_SIZE = 1_000;
  * Configurable via REINDEX_CATCHUP_THRESHOLD (default: 500).
  */
 function getCatchupThreshold(): number {
-  return parseInt(process.env.REINDEX_CATCHUP_THRESHOLD ?? '500', 10);
+  return config.reindexCatchupThreshold;
 }
 
 /**
  * Batch size used in catch-up mode.
- * Configurable via REINDEX_CATCHUP_BATCH_SIZE (default: 500).
  * Hard-capped at MAX_ALLOWED_CATCHUP_BATCH_SIZE.
  */
 function getCatchupBatchSize(): number {
-  const raw = parseInt(process.env.REINDEX_CATCHUP_BATCH_SIZE ?? '500', 10);
-  return Math.min(raw, MAX_ALLOWED_CATCHUP_BATCH_SIZE);
+  return Math.min(config.reindexCatchupBatchSize, MAX_ALLOWED_CATCHUP_BATCH_SIZE);
 }
 
 /**
  * Normal steady-state batch size.
- * Configurable via REINDEX_BATCH_SIZE (default: 100).
  */
 function getSteadyBatchSize(): number {
-  return parseInt(process.env.REINDEX_BATCH_SIZE ?? '100', 10);
+  return config.reindexBatchSize;
 }
 
 /**
  * Normal steady-state inter-batch delay in ms.
- * Configurable via REINDEX_BATCH_DELAY_MS (default: 50).
  */
 function getSteadyBatchDelay(): number {
-  return parseInt(process.env.REINDEX_BATCH_DELAY_MS ?? '50', 10);
+  return config.reindexBatchDelayMs;
 }
 
 /**
  * Backoff delay applied after an RPC 429 (rate-limit) error, regardless of mode.
- * Configurable via REINDEX_RATE_LIMIT_BACKOFF_MS (default: 2 000).
  */
 function getRateLimitBackoffMs(): number {
-  return parseInt(process.env.REINDEX_RATE_LIMIT_BACKOFF_MS ?? '2000', 10);
+  return config.reindexRateLimitBackoffMs;
 }
 
 /** Determine whether an error is an RPC rate-limit response. */
