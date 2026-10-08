@@ -86,17 +86,15 @@ Protects the validator milestone submission endpoint against evidence upload flo
 **Namespace:** `validator-milestone`
 
 **Configuration:**
-- `MILESTONE_RATE_WINDOW_MS`: Time window in milliseconds (default: `60000` = 1 minute)
-- `MILESTONE_RATE_MAX`: Max evidence submission requests per window per caller (default: `10`)
+- `MILESTONE_PLAYER_RATE_WINDOW_MS`: Rolling window per player in milliseconds (default: `3600000` = 1 hour)
+- `MILESTONE_PLAYER_RATE_MAX`: Max milestone submissions per player per window (default: `10`)
 
-**Example:** Each caller IP/validator can submit up to 10 milestone evidence payloads per 60 seconds.
+**Example:** Each player can submit up to 10 milestone evidence payloads per hour.
 
 **Where applied:**
 - `POST /api/validators/milestone` (and versioned aliases `/api/v1/validators/milestone`, `/api/v2/validators/milestone`)
 
-**Use case:** Submitting milestone evidence triggers schema validation, Pinata IPFS file downloading/re-pinning, and Soroban on-chain verification. Restricting submissions per caller prevents denial-of-service and storage abuse.
-
-**Interaction with per-player rate limits:** This caller-level limiter works in tandem with the per-player rate limiter (`MILESTONE_PLAYER_RATE_WINDOW_MS` / `MILESTONE_PLAYER_RATE_MAX`, default 10 submissions per player per hour, issue #1137). A validator submitting evidence is checked against both: their own burst rate (`MILESTONE_RATE_*`) and the target player's submission limit.
+**Use case:** Submitting milestone evidence triggers schema validation, Pinata IPFS file downloading/re-pinning, and Soroban on-chain verification. Restricting submissions per player prevents denial-of-service and storage abuse.
 
 ## Namespacing & Isolation
 
@@ -191,8 +189,6 @@ try {
 - `RATE_LIMIT_WINDOW_MS=60000`
 - `RATE_LIMIT_MAX=60` (1 req/sec average)
 - `AUTH_RATE_LIMIT_MAX=5`
-- `MILESTONE_RATE_WINDOW_MS=60000`
-- `MILESTONE_RATE_MAX=10`
 - `AUTH_RATE_LIMIT_IP_MAX=60`
 
 ### Adjusting Limits
@@ -270,7 +266,7 @@ All other endpoints are subject to rate limiting:
 - `POST /api/auth/challenge`
 - `POST /api/auth/token`
 - `GET /api/validators`
-- `POST /api/validators/milestone` (governed by `MILESTONE_RATE_*` and `MILESTONE_PLAYER_RATE_*`)
+- `POST /api/validators/milestone` (governed by `MILESTONE_PLAYER_RATE_*`)
 - `POST /api/admin/*` (high-value operations — consider stricter limits)
 - Any endpoint not explicitly exempted
 
