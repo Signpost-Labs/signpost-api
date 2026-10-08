@@ -116,7 +116,7 @@ jobs:
             .
           mv "$RUNNER_TEMP/release.tar.gz" release.tar.gz
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: staging-release
           path: release.tar.gz
