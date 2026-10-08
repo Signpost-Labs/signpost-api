@@ -6,6 +6,8 @@
  * Promise so both kinds of backend are interchangeable behind a single async
  * API - callers never need to know which backend is active.
  */
+import config from '../config';
+
 export interface CacheStore {
   /** Fetch a value by key. Returns undefined if missing or expired. */
   get<T>(key: string): Promise<T | undefined>;
@@ -47,8 +49,7 @@ export class InMemoryCacheStore implements CacheStore {
   private readonly maxSize: number;
 
   constructor() {
-    const parsed = Number(process.env.CACHE_MAX_SIZE);
-    this.maxSize = Number.isFinite(parsed) && parsed > 0 ? parsed : 1000;
+    this.maxSize = config.cacheMaxSize;
   }
 
   async get<T>(key: string): Promise<T | undefined> {
