@@ -1,4 +1,5 @@
 import { CacheStore } from './cacheStore';
+import config from '../config';
 import { recordCacheEviction } from '../middleware/metrics';
 
 interface Entry {
@@ -10,8 +11,7 @@ const DEFAULT_MAX_SIZE = 1000;
 
 function resolveMaxSize(explicit?: number): number {
   if (explicit !== undefined && explicit > 0) return explicit;
-  const fromEnv = Number(process.env.CACHE_MAX_ENTRIES);
-  return fromEnv > 0 ? fromEnv : DEFAULT_MAX_SIZE;
+  return config.cacheMaxEntries;
 }
 
 export class InMemoryCacheStore implements CacheStore {
