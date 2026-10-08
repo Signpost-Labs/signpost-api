@@ -1,6 +1,6 @@
 # Promiscope Backend — API for Community Project Accountability on Stellar
 
-Promiscope helps communities track project commitments, milestones, updates, evidence, and responses. The frontend currently authenticates publishers with Stellar SEP-10 and stores accountability records off-chain. This Node.js API and its Soroban indexer still serve the previous product; accountability API support is planned and tracked in [issue #13](https://github.com/Stellar-Promiscope/promiscope-backend/issues/13).
+Promiscope helps communities track project commitments, milestones, updates, evidence, and responses. The frontend currently authenticates publishers with Stellar SEP-10 and stores accountability records off-chain.
 
 ## Architecture and tree
 
