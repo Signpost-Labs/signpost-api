@@ -110,37 +110,6 @@ export interface PostgresTimeoutOptions {
   idleInTransactionSessionTimeoutMs: number;
 }
 
-/**
- * Translates the app's SQLite-style `?` positional placeholders into
- * PostgreSQL's `$1, $2, ...` placeholders, so query SQL can be shared
- * verbatim between SqliteDriver and PostgresDriver call sites. Placeholders
- * inside single-quoted string literals are left untouched (none of the
- * application's SQL currently embeds a literal `?` in a string, but this
- * keeps the translation correct rather than merely lucky).
- */
-export function translatePlaceholders(sql: string): string {
-  let out = '';
-  let inString = false;
-  let paramIndex = 0;
-  for (let i = 0; i < sql.length; i++) {
-    const ch = sql[i];
-    if (ch === "'") {
-      // SQL escapes a literal quote as '' — a doubled quote does not toggle
-      // string state.
-      inString = !inString;
-      out += ch;
-      continue;
-    }
-    if (ch === '?' && !inString) {
-      paramIndex += 1;
-      out += `$${paramIndex}`;
-      continue;
-    }
-    out += ch;
-  }
-  return out;
-}
-
 export class PostgresDriver implements DbDriver {
   private pool: Pool;
 
@@ -192,7 +161,7 @@ export class PostgresDriver implements DbDriver {
   }
 
   async all<T>(sql: string, params?: unknown[]): Promise<T[]> {
-    const result = await this.pool.query(translatePlaceholders(sql), params);
+    const result = await this.pool.query(convertPlaceholders(sql), params);
     return (result.rows || []) as T[];
   }
 
@@ -209,7 +178,7 @@ export class PostgresDriver implements DbDriver {
   }
 
   async run(sql: string, params?: unknown[]): Promise<{ changes: number; lastId: number }> {
-    const result = await this.pool.query(translatePlaceholders(sql), params);
+    const result = await this.pool.query(convertPlaceholders(sql), params);
     return extractRunResult(result);
   }
 
@@ -236,22 +205,22 @@ export class PostgresDriver implements DbDriver {
     const client = await this.pool.connect();
     const tx: DbTxHandle = {
       all: async <R>(sql: string, params?: unknown[]) => {
-        const result = await client.query(translatePlaceholders(sql), params);
+        const result = await client.query(convertPlaceholders(sql), params);
         return (result.rows || []) as R[];
       },
       get: async <R>(sql: string, params?: unknown[]) => {
-        const result = await client.query(translatePlaceholders(sql), params);
+        const result = await client.query(convertPlaceholders(sql), params);
         return (result.rows[0] as R | undefined) ?? undefined;
       },
       value: async <R>(sql: string, params?: unknown[]) => {
-        const result = await client.query(translatePlaceholders(sql), params);
+        const result = await client.query(convertPlaceholders(sql), params);
         const row = result.rows[0] as Record<string, unknown> | undefined;
         if (!row) return undefined;
         const values = Object.values(row);
         return values.length > 0 ? (values[0] as R) : undefined;
       },
       run: async (sql: string, params?: unknown[]) => {
-        const result = await client.query(translatePlaceholders(sql), params);
+        const result = await client.query(convertPlaceholders(sql), params);
         return extractRunResult(result);
       },
       exec: async (sql: string) => {
