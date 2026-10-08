@@ -1,6 +1,18 @@
-# Promiscope Backend — API for Community Project Accountability on Stellar
+# Signpost Backend — API for Community Project Accountability on Stellar
 
-Promiscope helps communities track project commitments, milestones, updates, evidence, and responses. The frontend currently authenticates publishers with Stellar SEP-10 and stores accountability records off-chain.
+![CI](https://github.com/Signpost-Labs/signpost-api/actions/workflows/ci.yml/badge.svg)
+![Stellar](https://img.shields.io/badge/Stellar-Soroban-7D00FF?logo=stellar&logoColor=white)
+
+Signpost helps communities track project commitments, milestones, updates, evidence, and responses. The frontend currently authenticates publishers with Stellar SEP-10 and stores accountability records off-chain.
+
+## Table of Contents
+
+- [Architecture and tree](#architecture-and-tree)
+- [How the project uses Stellar](#how-the-project-uses-stellar)
+- [Environment configuration](#environment-configuration)
+- [Prerequisites](#prerequisites)
+- [Development](#development)
+- [Security](#security)
 
 ## Architecture and tree
 
@@ -23,8 +35,28 @@ Copy `.env.example` to `.env`; its comments define defaults, accepted values, an
 
 For local development, use the configured SQLite default and Stellar testnet endpoints. PostgreSQL deployments configure `DATABASE_URL`; Redis, Pinata, and signing credentials are needed only for the corresponding integrations. See [DEPLOYMENT.md](DEPLOYMENT.md) and the focused guides in [docs/](docs/README.md).
 
+## Prerequisites
+
+| Tool | Notes |
+| --- | --- |
+| **Node.js** | 22 (see `.nvmrc`) |
+| **npm** | 10+ |
+| **SQLite by default** | PostgreSQL for production |
+| **Redis / Pinata** | optional integrations |
+
 ## Development
 
 Use the Node version declared by `package.json`. Run `npm install`, `npm run dev`, `npm run build`, `npm test`, and `npm run lint` as needed. Contract checks use `npm run test:contracts` and the pinned Rust toolchain. PostgreSQL integration tests use `npm run test:postgres` with a configured database.
 
 Update the OpenAPI contract and regenerate `clients/typescript/` when API types change. Pull requests should describe the behavior and compatibility impact, link an issue, and report validation performed. See [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md).
+
+## Security
+
+- **Never commit secrets** — keep keys, seed phrases, and `.env` files out of source control.
+- **Testnet values have no real-world value**; treat testnet deployments as experimental.
+- **Keys never leave the wallet** — signing is delegated to the user's Stellar wallet; the app does not store secret keys.
+- Report vulnerabilities per `SECURITY.md` where present rather than opening a public issue.
+
+## License
+
+No `LICENSE` file is published in this repository yet.
