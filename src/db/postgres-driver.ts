@@ -16,6 +16,7 @@
 
 import { Pool, types, type PoolConfig } from 'pg';
 import { DbDriver, DbTxHandle } from './driver';
+import { logger } from '../utils/logger';
 
 // `pg` returns BIGINT (OID 20) columns as JS strings by default — it doesn't
 // trust a JS `number` to losslessly hold an arbitrary 64-bit value. Every
@@ -176,7 +177,7 @@ export class PostgresDriver implements DbDriver {
     // A pooled connection erroring while idle (e.g. the network drops)
     // would otherwise crash the process as an uncaught 'error' event.
     this.pool.on('error', (err) => {
-      console.error('[db] Unexpected error on idle PostgreSQL client:', err);
+      logger.error('[db] Unexpected error on idle PostgreSQL client:', err);
     });
   }
 
@@ -277,7 +278,7 @@ export class PostgresDriver implements DbDriver {
       try {
         await client.query('ROLLBACK');
       } catch (rollbackErr) {
-        console.error('[db] Rollback failed:', rollbackErr);
+        logger.error('[db] Rollback failed:', rollbackErr);
       }
       throw err;
     } finally {
@@ -295,7 +296,7 @@ export class PostgresDriver implements DbDriver {
     try {
       await this.pool.end();
     } catch (err) {
-      console.error('[db] Error closing PostgreSQL connection pool:', err);
+      logger.error('[db] Error closing PostgreSQL connection pool:', err);
     }
   }
 }

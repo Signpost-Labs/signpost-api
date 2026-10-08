@@ -6,6 +6,7 @@
 
 import type Database from 'better-sqlite3';
 import { DbDriver, DbTxHandle } from './driver';
+import { logger } from '../utils/logger';
 
 export class SqliteDriver implements DbDriver {
   /**
@@ -82,7 +83,7 @@ export class SqliteDriver implements DbDriver {
         try {
           this.db.exec('ROLLBACK');
         } catch (rollbackErr) {
-          console.error('[db] Rollback failed:', rollbackErr);
+          logger.error('[db] Rollback failed:', rollbackErr);
         }
         throw err;
       }
