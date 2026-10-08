@@ -26,10 +26,7 @@ const SSE_CAPACITY_RETRY_AFTER_SECONDS = 30;
 // ─── Configuration ────────────────────────────────────────────────────────────
 
 /** Interval between keep-alive comment pings, in milliseconds. */
-const KEEPALIVE_INTERVAL_MS = parseInt(
-  process.env.SSE_KEEPALIVE_INTERVAL_MS ?? '15000',
-  10,
-);
+const KEEPALIVE_INTERVAL_MS = config.sse.keepaliveIntervalMs;
 
 /**
  * Interval for the shared authorization sweep, in milliseconds.
@@ -44,15 +41,11 @@ const KEEPALIVE_INTERVAL_MS = parseInt(
  *   - same-process revocation/blocklist: immediate (synchronous event)
  *   - cross-process: ≤ SSE_AUTH_SWEEP_INTERVAL_MS (default 30 000 ms)
  */
-const AUTH_SWEEP_INTERVAL_MS = parseInt(
-  process.env.SSE_AUTH_SWEEP_INTERVAL_MS ?? '30000',
-  10,
-);
+const AUTH_SWEEP_INTERVAL_MS = config.sse.authSweepIntervalMs;
 
-/** Maximum number of concurrent SSE connections (0 = unlimited). Read live
- *  (not cached at module load) so tests can flip it per-case. */
+/** Maximum number of concurrent SSE connections (0 = unlimited). */
 function getMaxSseConnections(): number {
-  return parseInt(process.env.SSE_MAX_CONNECTIONS ?? '0', 10);
+  return config.sse.maxConnections;
 }
 
 /**
