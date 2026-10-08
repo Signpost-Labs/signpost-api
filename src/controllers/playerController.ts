@@ -737,8 +737,7 @@ try {
   } catch (err) {
     // Log error but don't re-throw; profile view recording is non-critical
     const message = err instanceof Error ? err.message : JSON.stringify(err);
-    // eslint-disable-next-line no-console
-    console.error(`[Profile View Recording Error] ${message}`, {
+    logger.error(`[Profile View Recording Error] ${message}`, {
       playerId: req.params.playerId as string,
       scoutWallet: req.account,
     });
