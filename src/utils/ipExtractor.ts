@@ -1,11 +1,12 @@
 import { Request } from 'express';
+import config from '../config';
 
 /**
- * Trusted proxy count. Set via TRUSTED_PROXY_COUNT env var (default: 1).
+ * Trusted proxy count.
  * When behind a load balancer, the rightmost IP in X-Forwarded-For that
  * is NOT from a trusted proxy is the real client IP.
  */
-const TRUSTED_PROXY_COUNT = parseInt(process.env.TRUSTED_PROXY_COUNT ?? '1', 10);
+const TRUSTED_PROXY_COUNT = config.trustedProxyCount;
 
 /**
  * Extract the real client IP from a request.
