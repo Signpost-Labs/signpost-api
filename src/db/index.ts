@@ -2,7 +2,7 @@ import type Database from 'better-sqlite3';
 import crypto from 'crypto';
 import { trace, SpanStatusCode } from '@opentelemetry/api';
 import config from '../config';
-import { EventRecord, ContractEventType } from '../types';
+import { EventRecord, ContractEventType, CONTRACT_EVENT_TYPES } from '../types';
 import { EVENTS_ORDER_BY_SQL } from '../services/eventOrdering';
 import { runMigrations } from './migrate';
 import { logger } from '../utils/logger';
@@ -3081,6 +3081,15 @@ export function createWebhookSubscription(
   scoutWallet?: string,
   eventTypes?: string[],
 ): WebhookSubscription {
+  if (eventTypes && eventTypes.length > 0) {
+    const validTypes = new Set<string>(CONTRACT_EVENT_TYPES);
+    for (const et of eventTypes) {
+      if (!validTypes.has(et)) {
+        throw new Error(`Invalid event type: ${et}`);
+      }
+    }
+  }
+
   const finalSecret = secret ?? crypto.randomBytes(32).toString('hex');
   // Encrypted at rest (#686) — only the ciphertext is ever persisted. The
   // plaintext is returned to the caller here (e.g. for the API response at
