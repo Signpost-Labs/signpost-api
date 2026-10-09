@@ -730,6 +730,8 @@ const config = {
     keepaliveIntervalMs: parseNumericEnv('SSE_KEEPALIVE_INTERVAL_MS', process.env.SSE_KEEPALIVE_INTERVAL_MS, 15000, { min: 1, integer: true }),
     /** Max concurrent SSE connections (0 = unlimited). */
     maxConnections: parseNumericEnv('SSE_MAX_CONNECTIONS', process.env.SSE_MAX_CONNECTIONS, 0, { min: 0, integer: true }),
+    /** Max concurrent SSE streams per authenticated wallet (0 = unlimited). */
+    maxConnectionsPerWallet: parseNumericEnv('SSE_MAX_CONNECTIONS_PER_WALLET', process.env.SSE_MAX_CONNECTIONS_PER_WALLET, 5, { min: 0, integer: true }),
     /** Interval for shared SSE auth sweep (re-check revocations, blocklists). */
     authSweepIntervalMs: parseNumericEnv('SSE_AUTH_SWEEP_INTERVAL_MS', process.env.SSE_AUTH_SWEEP_INTERVAL_MS, 30000, { min: 1, integer: true }),
   },
