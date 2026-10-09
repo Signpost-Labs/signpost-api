@@ -73,6 +73,12 @@ export const ErrorCode = {
    */
   REQUEST_TIMEOUT: 'REQUEST_TIMEOUT',
 
+  /**
+   * HTTP 503 — The rate limiter backing store is unavailable under a fail-closed policy.
+   * Client should: Retry after a short delay with exponential backoff.
+   */
+  SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
+
   // ── Auth ──────────────────────────────────────────────────────────────────
   /**
    * HTTP 401 — Request lacks valid authentication (missing/invalid JWT or API key).
