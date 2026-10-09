@@ -16,6 +16,7 @@ import path from 'path';
 import Database from 'better-sqlite3';
 import { runMigrations } from '../../src/db/migrate';
 import { SqliteDriver } from '../../src/db/sqlite-driver';
+import config from '../../src/config';
 
 /** Wrap a raw better-sqlite3 Database in the SqliteDriver adapter that runMigrations expects. */
 async function migrate(db: Database.Database): Promise<void> {
@@ -874,6 +875,18 @@ describe('full migration sequence from scratch (#885)', () => {
     }
   });
 
+  it("each migration in 'migrations' table has a non-null, non-empty checksum (#110)", () => {
+    const rows = db
+      .prepare('SELECT id, checksum FROM migrations')
+      .all() as { id: string; checksum: string | null }[];
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) {
+      expect(row.checksum).not.toBeNull();
+      expect(typeof row.checksum).toBe('string');
+      expect(row.checksum!.length).toBeGreaterThan(0);
+    }
+  });
+
   // ── 5. All tables are queryable (smoke test) ───────────────────────────────
 
   const smokeTables = [
@@ -893,4 +906,52 @@ describe('full migration sequence from scratch (#885)', () => {
       expect(() => db.prepare(`SELECT * FROM ${table} LIMIT 0`).all()).not.toThrow();
     });
   }
+});
+
+describe('migration checksum tamper detection (#110)', () => {
+  it('fails on a modified migration when MIGRATION_CHECKSUM_MODE=strict', async () => {
+    const memDb = new Database(':memory:');
+    const sqliteDriver = new SqliteDriver(memDb);
+    await runMigrations(sqliteDriver);
+
+    // Tamper with an existing migration checksum in the DB to simulate modified file on disk
+    memDb.prepare('UPDATE migrations SET checksum = ? WHERE id = ?').run(
+      '0000000000000000000000000000000000000000000000000000000000000000',
+      '001_initial.sql'
+    );
+
+    const prevMode = config.migrationChecksumMode;
+    try {
+      (config as { migrationChecksumMode: string }).migrationChecksumMode = 'strict';
+      await expect(runMigrations(sqliteDriver)).rejects.toThrow(
+        /Migration "001_initial\.sql" checksum mismatch/i
+      );
+    } finally {
+      (config as { migrationChecksumMode: string }).migrationChecksumMode = prevMode;
+    }
+  });
+
+  it('warns on a modified migration when MIGRATION_CHECKSUM_MODE=warn', async () => {
+    const memDb = new Database(':memory:');
+    const sqliteDriver = new SqliteDriver(memDb);
+    await runMigrations(sqliteDriver);
+
+    memDb.prepare('UPDATE migrations SET checksum = ? WHERE id = ?').run(
+      '0000000000000000000000000000000000000000000000000000000000000000',
+      '001_initial.sql'
+    );
+
+    const prevMode = config.migrationChecksumMode;
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      (config as { migrationChecksumMode: string }).migrationChecksumMode = 'warn';
+      await expect(runMigrations(sqliteDriver)).resolves.toBeDefined();
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/Migration "001_initial\.sql" checksum mismatch/i)
+      );
+    } finally {
+      warnSpy.mockRestore();
+      (config as { migrationChecksumMode: string }).migrationChecksumMode = prevMode;
+    }
+  });
 });
