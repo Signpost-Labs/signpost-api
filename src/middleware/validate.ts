@@ -189,7 +189,7 @@ export function validateParams<T>(schema: ZodSchema<T>, options?: ValidationOpti
     }
     // Express 5: req.params is read-only, merge validated params into a local variable
     // Controllers should use the validated data from result.data directly
-    (req as any).validatedParams = sanitizeObject(result.data);
+    req.validatedParams = sanitizeObject(result.data);
     next();
   };
 }
