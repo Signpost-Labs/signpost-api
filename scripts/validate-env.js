@@ -183,12 +183,20 @@ if (require.main === module) {
     process.exit(1);
   }
 
-  // ── Reverse check: .env.example → src/ (warning only) ────────────────────
+  // ── Reverse check: .env.example → src/ ────────────────────────────────
   const staleKeys = findStaleExampleKeys(examplePath, srcFiles);
   if (staleKeys.length) {
-    console.warn('Warning: the following .env.example entries have no matching process.env reference in src/:');
-    staleKeys.forEach((k) => console.warn(`  ${k}`));
-    console.warn('These may be stale or read via a dynamic pattern not detected by static analysis.');
+    const isStrictExtras = process.argv.includes('--strict-extras');
+    if (isStrictExtras) {
+      console.error('Error: the following .env.example entries have no matching process.env reference in src/:');
+      staleKeys.forEach((k) => console.error(`  ${k}`));
+      console.error('Remove them from .env.example or add to the allowlist if they are intentionally reserved.');
+      process.exit(1);
+    } else {
+      console.warn('Warning: the following .env.example entries have no matching process.env reference in src/:');
+      staleKeys.forEach((k) => console.warn(`  ${k}`));
+      console.warn('These may be stale or read via a dynamic pattern not detected by static analysis.');
+    }
   }
 
   console.log('Environment validation passed ✓');
