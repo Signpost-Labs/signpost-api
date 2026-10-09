@@ -2523,6 +2523,12 @@ export async function touchApiKeyLastUsed(id: number): Promise<void> {
  * blocked wallet is a no-op.
  */
 export async function blockWalletDb(wallet: string, reason: string | null): Promise<void> {
+  if (!wallet || typeof wallet !== 'string' || wallet.trim().length === 0) {
+    throw new Error('wallet cannot be empty');
+  }
+  if (reason !== null && reason !== undefined && typeof reason === 'string' && reason.length > 500) {
+    throw new Error('reason length cannot exceed 500 characters');
+  }
   const now = Math.floor(Date.now() / 1000);
   const sql = `
     INSERT INTO wallet_blocklist (wallet, reason, blocked_at)
@@ -2536,6 +2542,9 @@ export async function blockWalletDb(wallet: string, reason: string | null): Prom
 
 /** Remove a wallet from the blocklist. Returns true if a row was removed. */
 export async function unblockWalletDb(wallet: string): Promise<boolean> {
+  if (!wallet || typeof wallet !== 'string' || wallet.trim().length === 0) {
+    throw new Error('wallet cannot be empty');
+  }
   const sql = `DELETE FROM wallet_blocklist WHERE wallet = ?`;
   return timedQueryAsync(sql, async () => {
     const info = await getDriver().run(sql, [wallet]);
