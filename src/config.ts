@@ -716,6 +716,7 @@ const config = {
   // Per-component timeout for readiness probes (#1317)
   readinessDb: {
     timeoutMs: parseNumericEnv('READINESS_DB_TIMEOUT_MS', process.env.READINESS_DB_TIMEOUT_MS, 2000, { min: 1, integer: true }),
+    throttleMs: parseNumericEnv('READINESS_DB_THROTTLE_MS', process.env.READINESS_DB_THROTTLE_MS, 10000, { min: 0, integer: true }),
   },
   readinessIpfs: {
     timeoutMs: parseNumericEnv('READINESS_IPFS_TIMEOUT_MS', process.env.READINESS_IPFS_TIMEOUT_MS, 5000, { min: 1, integer: true }),
