@@ -20,6 +20,8 @@
 // Plain breaker (IPFS / Pinata) — issue #1142
 // ─────────────────────────────────────────────────────────────────────────────
 
+import config from '../config';
+
 export type CircuitState = 'closed' | 'open' | 'half-open';
 
 export interface CircuitBreakerOptions {
@@ -50,11 +52,9 @@ export class CircuitBreaker {
   constructor(options: CircuitBreakerOptions = {}) {
     this.name = options.name ?? 'unknown';
     this.failureThreshold =
-      options.failureThreshold ??
-      parseInt(process.env.CIRCUIT_BREAKER_FAILURE_THRESHOLD ?? '5', 10);
+      options.failureThreshold ?? config.circuitBreaker.failureThreshold;
     this.resetTimeoutMs =
-      options.resetTimeoutMs ??
-      parseInt(process.env.CIRCUIT_BREAKER_RESET_TIMEOUT_MS ?? '30000', 10);
+      options.resetTimeoutMs ?? config.circuitBreaker.resetTimeoutMs;
   }
 
   getState(): CircuitState {
