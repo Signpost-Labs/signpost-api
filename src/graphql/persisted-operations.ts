@@ -13,7 +13,7 @@
  */
 
 import { Plugin } from 'graphql-yoga';
-import { GraphQLError } from 'graphql';
+import { GraphQLError, type ExecutionArgs, type ExecutionResult, type DocumentNode } from 'graphql';
 import crypto from 'crypto';
 import config from '../config';
 import { logger } from '../utils/logger';
@@ -50,10 +50,10 @@ export function loadPersistedOperationsFromFile(filePath: string): boolean {
       logger.info(`[persisted-ops] File not found: ${filePath}, starting with empty store`);
       return true;
     }
-    
+
     const content = fs.readFileSync(filePath, 'utf8');
     const ops = JSON.parse(content) as Record<string, string>;
-    
+
     persistedOperations = new Map(Object.entries(ops));
     logger.info(`[persisted-ops] Loaded ${persistedOperations.size} persisted operation(s) from ${filePath}`);
     return true;
@@ -71,7 +71,7 @@ export function getOperationDocument(hash: string): string | undefined {
   if (config.graphqlPersistedOnly) {
     return persistedOperations.get(hash);
   }
-  
+
   // In development, check both stores
   return persistedOperations.get(hash) || developmentOperations.get(hash);
 }
@@ -96,6 +96,21 @@ export function getOperationHash(document: string): string {
 // ─── graphql-yoga plugin ─────────────────────────────────────────────────────
 
 /**
+ * Extended execution args that allow overriding the document field
+ * with a persisted operation string.
+ */
+type PersistedExecutionArgs = Omit<ExecutionArgs, 'document'> & {
+  document: DocumentNode | string;
+  extensions?: { persistedQuery?: { version?: number; sha256Hash?: string } };
+};
+
+interface OnExecuteHookPayload {
+  args: PersistedExecutionArgs;
+  setResult: (result: ExecutionResult) => void;
+  setResultHandler: (handler: (result: ExecutionResult) => ExecutionResult) => void;
+}
+
+/**
  * GraphQL plugin that enforces persisted operations.
  *
  * In production mode (GRAPHQL_PERSISTED_ONLY=true):
@@ -108,10 +123,9 @@ export function getOperationHash(document: string): string {
  */
 export function createPersistedOperationsPlugin(): Plugin {
   return {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onExecute({ args, setResult, setResultHandler }: any) {
+    onExecute({ args, setResult, setResultHandler }: OnExecuteHookPayload) {
       const document = args?.document;
-      
+
       if (!document) {
         setResult({
           errors: [
@@ -122,12 +136,12 @@ export function createPersistedOperationsPlugin(): Plugin {
         });
         return;
       }
-      
+
       // Extract hash from extensions if present
-      const hash = args?.extensions?.persistedQuery?.version 
-        ? args.extensions.persistedQuery.sha256Hash 
+      const hash = args?.extensions?.persistedQuery?.version
+        ? args.extensions.persistedQuery.sha256Hash
         : undefined;
-      
+
       // In production, we require a valid hash
       if (config.graphqlPersistedOnly) {
         if (!hash) {
@@ -140,19 +154,19 @@ export function createPersistedOperationsPlugin(): Plugin {
           });
           return;
         }
-        
+
         const documentForHash = persistedOperations.get(hash);
         if (!documentForHash) {
           setResult({
             errors: [
-            new GraphQLError(`Unknown persisted query hash: ${hash}`, {
+              new GraphQLError(`Unknown persisted query hash: ${hash}`, {
                 extensions: { code: 'PERSISTED_QUERY_NOT_FOUND', hash },
               }),
             ],
           });
           return;
         }
-        
+
         // Validate that the provided document matches the stored hash
         // This prevents hash collision attacks
         if (document !== documentForHash) {
@@ -165,25 +179,21 @@ export function createPersistedOperationsPlugin(): Plugin {
           });
           return;
         }
-        
+
         // Store the validated document for execution
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (args as any).document = documentForHash;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return { onExecuteDone: ({ result }: any) => logOperationResult(args.document, result) };
+        args.document = documentForHash;
+        return { onExecuteDone: ({ result }: { result: ExecutionResult }) => logOperationResult(args.document, result) };
       }
-      
+
       // In development mode, allow arbitrary documents
       // If a hash is provided and we have it, use it; otherwise use provided document
       if (hash) {
         const documentForHash = getOperationDocument(hash);
         if (documentForHash) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (args as any).document = documentForHash;
+          args.document = documentForHash;
         }
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { onExecuteDone: ({ result }: any) => logOperationResult(args.document, result) };
+      return { onExecuteDone: ({ result }: { result: ExecutionResult }) => logOperationResult(args.document, result) };
     },
   };
 }
@@ -191,8 +201,7 @@ export function createPersistedOperationsPlugin(): Plugin {
 /**
  * Log persisted-query errors and completed operations for metrics.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function logOperationResult(document: unknown, result: any): void {
+function logOperationResult(document: unknown, result: ExecutionResult): void {
   if (typeof document !== 'string') return;
 
   // Extract operation name for metrics
