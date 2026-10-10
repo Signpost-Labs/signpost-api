@@ -1,10 +1,101 @@
 import fs from 'fs';
 import path from 'path';
+import crypto from 'crypto';
 import { DbDriver, DbTxHandle } from './driver';
 import { getMigrationFiles } from './migration-files';
 import { PostgresDriver } from './postgres-driver';
+import config from '../config';
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '../../db');
+
+export function computeMigrationChecksum(content: string): string {
+  return crypto.createHash('sha256').update(content).digest('hex');
+}
+
+async function hasChecksumColumn(driver: DbDriver): Promise<boolean> {
+  try {
+    await driver.get('SELECT checksum FROM migrations LIMIT 0');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function recordMigrationApplied(
+  driver: DbDriver,
+  filename: string,
+  checksum: string,
+  tx?: DbTxHandle,
+): Promise<void> {
+  const runner = tx ?? driver;
+  const withChecksum = await hasChecksumColumn(driver);
+  if (withChecksum) {
+    await runner.run(
+      'INSERT INTO migrations (id, applied_at, checksum) VALUES (?, ?, ?)',
+      [filename, Date.now(), checksum]
+    );
+  } else {
+    await runner.run(
+      'INSERT INTO migrations (id, applied_at) VALUES (?, ?)',
+      [filename, Date.now()]
+    );
+  }
+}
+
+export async function backfillMissingChecksums(
+  driver: DbDriver,
+  migrationsDir: string = MIGRATIONS_DIR,
+): Promise<void> {
+  if (!(await hasChecksumColumn(driver))) return;
+
+  const nullRows = await driver.all<{ id: string }>(
+    'SELECT id FROM migrations WHERE checksum IS NULL'
+  );
+
+  for (const row of nullRows) {
+    const filePath = path.join(migrationsDir, row.id);
+    let checksum: string;
+    if (fs.existsSync(filePath)) {
+      checksum = computeMigrationChecksum(fs.readFileSync(filePath, 'utf8'));
+    } else {
+      checksum = computeMigrationChecksum(row.id);
+    }
+    await driver.run(
+      'UPDATE migrations SET checksum = ? WHERE id = ?',
+      [checksum, row.id]
+    );
+  }
+}
+
+async function validateAppliedMigrationChecksums(
+  driver: DbDriver,
+  migrationsDir: string = MIGRATIONS_DIR,
+): Promise<void> {
+  if (!(await hasChecksumColumn(driver))) return;
+
+  const mode = config.migrationChecksumMode ?? 'warn';
+  const rows = await driver.all<{ id: string; checksum: string | null }>(
+    'SELECT id, checksum FROM migrations WHERE checksum IS NOT NULL'
+  );
+
+  for (const row of rows) {
+    if (!row.checksum) continue;
+    const filePath = path.join(migrationsDir, row.id);
+    if (!fs.existsSync(filePath)) continue;
+
+    const content = fs.readFileSync(filePath, 'utf8');
+    const currentChecksum = computeMigrationChecksum(content);
+
+    if (row.checksum !== currentChecksum) {
+      const msg = `Migration "${row.id}" checksum mismatch: expected ${row.checksum}, got ${currentChecksum}`;
+      if (mode === 'strict') {
+        throw new Error(msg);
+      } else {
+        console.warn(`[migration] WARN: ${msg}`);
+      }
+    }
+  }
+}
 
 export type MigrationDirection = 'up' | 'down';
 
@@ -118,6 +209,11 @@ async function processUpMigrations(
   const results: MigrationResult[] = [];
   const isPostgres = isPostgresDriver(driver);
 
+  if (!dryRun) {
+    await validateAppliedMigrationChecksums(driver, MIGRATIONS_DIR);
+    await backfillMissingChecksums(driver, MIGRATIONS_DIR);
+  }
+
   const appliedMigrations = await getAppliedMigrations(driver);
   const pendingFiles = migrationFiles.filter((f) => !appliedMigrations.has(f));
 
@@ -127,6 +223,11 @@ async function processUpMigrations(
   for (const filename of filesToApply) {
     const isPostgresFile = filename.includes('_postgres');
     const dialectMismatch = isPostgresFile !== isPostgres;
+
+    const rawSql = fs.existsSync(path.join(MIGRATIONS_DIR, filename))
+      ? fs.readFileSync(path.join(MIGRATIONS_DIR, filename), 'utf8')
+      : filename;
+    const checksum = computeMigrationChecksum(rawSql);
 
     // A dedicated, correctly-dialected file for this migration already
     // exists — skip running this one through the best-effort regex
@@ -138,15 +239,12 @@ async function processUpMigrations(
         results.push({ filename, sql: '', applied: true });
         continue;
       }
-      await driver.run(
-        'INSERT INTO migrations (id, applied_at) VALUES (?, ?)',
-        [filename, Date.now()]
-      );
+      await recordMigrationApplied(driver, filename, checksum);
       results.push({ filename, sql: '', applied: true });
       continue;
     }
 
-    const sql = fs.readFileSync(path.join(MIGRATIONS_DIR, filename), 'utf8');
+    const sql = rawSql;
     let finalSql: string;
 
     if (isPostgres) {
@@ -170,10 +268,7 @@ async function processUpMigrations(
     try {
       await driver.transaction(async (tx: DbTxHandle) => {
         await tx.exec(finalSql);
-        await tx.run(
-          'INSERT INTO migrations (id, applied_at) VALUES (?, ?)',
-          [filename, Date.now()]
-        );
+        await recordMigrationApplied(driver, filename, checksum, tx);
       });
 
       results.push({
@@ -195,10 +290,7 @@ async function processUpMigrations(
       const isDuplicateColumn = /duplicate column name|already exists/i.test(message);
       const isCrossDriverFile = isPostgresFile && !isPostgres;
       if (isCrossDriverFile || isDuplicateColumn) {
-        await driver.run(
-          'INSERT INTO migrations (id, applied_at) VALUES (?, ?)',
-          [filename, Date.now()]
-        );
+        await recordMigrationApplied(driver, filename, checksum);
         results.push({
           filename,
           sql: finalSql,
@@ -213,6 +305,10 @@ async function processUpMigrations(
         });
       }
     }
+  }
+
+  if (!dryRun) {
+    await backfillMissingChecksums(driver, MIGRATIONS_DIR);
   }
 
   return results;
