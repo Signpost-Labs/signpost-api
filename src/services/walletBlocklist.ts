@@ -81,6 +81,12 @@ async function refreshWallet(wallet: string): Promise<boolean> {
  * and notifies local subscribers (SSE connections) synchronously.
  */
 export async function blocklistWallet(wallet: string, reason: string | null = null): Promise<void> {
+  if (!wallet || typeof wallet !== 'string' || wallet.trim().length === 0) {
+    throw new Error('wallet cannot be empty');
+  }
+  if (reason !== null && reason !== undefined && typeof reason === 'string' && reason.length > 500) {
+    throw new Error('reason length cannot exceed 500 characters');
+  }
   try {
     await blockWalletDb(wallet, reason);
     blockedCache.set(wallet, Date.now());
@@ -108,6 +114,9 @@ export async function blocklistWallet(wallet: string, reason: string | null = nu
 
 /** Remove a wallet from the blocklist. Returns true if it was blocked. */
 export async function unblocklistWallet(wallet: string): Promise<boolean> {
+  if (!wallet || typeof wallet !== 'string' || wallet.trim().length === 0) {
+    throw new Error('wallet cannot be empty');
+  }
   try {
     const removed = await unblockWalletDb(wallet);
     blockedCache.delete(wallet);
