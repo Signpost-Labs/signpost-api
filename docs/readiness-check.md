@@ -49,6 +49,14 @@ The readiness check reports the indexer service status based on:
 - **Effect**: If the heartbeat row write into `indexer_state` does not resolve within this timeout (e.g. disk contention, lock starvation in SQLite, or connection pool exhaustion in PostgreSQL), the DB check marks `status: 'unavailable'` and readiness returns `503`. Running probes concurrently with individual timeouts prevents a locked DB from blocking or hanging the entire readiness check.
 - **Recommended**: `1000-3000` ms (keep lower than your orchestrator's HTTP probe timeout).
 
+### `READINESS_DB_THROTTLE_MS`
+
+- **Purpose**: Throttle interval for database writability heartbeat writes into `indexer_state` (#99)
+- **Default**: `10000` (10 seconds)
+- **Unit**: Milliseconds (integer >= 0)
+- **Effect**: Within this interval after a successful writability check, subsequent readiness probes perform a lightweight read check (`SELECT 1`) rather than rewriting to `indexer_state` on every probe. This eliminates write lock contention on SQLite and WAL churn on PostgreSQL across multi-pod deployments while preserving the DB writability guarantee. If the DB is genuinely read-only or full, writes fail and are never cached as available. Set to `0` to disable throttling.
+- **Recommended**: `5000-15000` ms.
+
 ### `READINESS_IPFS_TIMEOUT_MS`
 
 - **Purpose**: Per-probe timeout for Pinata / IPFS API connectivity probe (`checkHealth()`)

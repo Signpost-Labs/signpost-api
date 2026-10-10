@@ -55,15 +55,39 @@ async function probeDb(timeoutMs = 2_000): Promise<'ok' | 'error'> {
   return withTimeout(() => getDriver().get('SELECT 1'), timeoutMs);
 }
 
+let lastDbWritableSuccessAt = 0;
+
+export function resetDbWritableThrottle(): void {
+  lastDbWritableSuccessAt = 0;
+}
+
 /** Probe DB writability with a heartbeat-row upsert into indexer_state.
  *  Catches disk-full/permissions regressions (SQLite) or connection-pool
  *  exhaustion (PostgreSQL) that a read-only SELECT 1 would miss.
  *  Resolves 'ok' or 'error'; never rejects.
  *  A configurable timeout (default 2 s) guards against a locked/unreachable DB
  *  hanging the readiness check.
+ *
+ *  Throttling (#99): Writes to indexer_state are throttled to at most once
+ *  every config.readinessDb.throttleMs (default 10s). Within the throttle
+ *  window, a lightweight read probe (SELECT 1) is used to verify responsiveness
+ *  without holding the SQLite write lock or causing WAL churn. If the DB is
+ *  genuinely read-only or full, writes fail immediately and are never cached as 'ok'.
  */
 async function probeDbWritable(timeoutMs = 2_000): Promise<'ok' | 'error'> {
-  return withTimeout(
+  const now = Date.now();
+  const throttleMs = config.readinessDb?.throttleMs ?? 10_000;
+
+  if (lastDbWritableSuccessAt > 0 && throttleMs > 0 && now - lastDbWritableSuccessAt < throttleMs) {
+    const readOutcome = await probeDb(timeoutMs);
+    if (readOutcome === 'ok') {
+      return 'ok';
+    }
+    // Connection or DB read failed: clear cached writability and fall through to attempt write
+    lastDbWritableSuccessAt = 0;
+  }
+
+  const outcome = await withTimeout(
     () =>
       getDriver().run(
         "INSERT INTO indexer_state (key, value) VALUES ('health_heartbeat', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
@@ -71,6 +95,14 @@ async function probeDbWritable(timeoutMs = 2_000): Promise<'ok' | 'error'> {
       ),
     timeoutMs,
   );
+
+  if (outcome === 'ok') {
+    lastDbWritableSuccessAt = Date.now();
+  } else {
+    lastDbWritableSuccessAt = 0;
+  }
+
+  return outcome;
 }
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────

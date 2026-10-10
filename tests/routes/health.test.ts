@@ -44,7 +44,7 @@ jest.mock('../../src/db', () => {
 });
 
 import request from 'supertest';
-import app from '../../src/app';
+import app, { resetDbWritableThrottle } from '../../src/app';
 import config from '../../src/config';
 import * as ipfsService from '../../src/services/ipfs';
 import * as stellarService from '../../src/services/stellar';
@@ -109,9 +109,11 @@ describe.each(READINESS_PATHS)('%s', (path) => {
     // The indexer-lag probe short-circuits to 'ok' during the post-boot grace
     // window; these tests assert lag behaviour directly, so disable it.
     (config as { readinessGracePeriodMs: number }).readinessGracePeriodMs = 0;
+    resetDbWritableThrottle();
   });
 
   afterEach(() => {
+    resetDbWritableThrottle();
     (config as { readinessGracePeriodMs: number }).readinessGracePeriodMs = previousGracePeriodMs;
     mockCheckHealth.mockReset();
     mockStellarHealth.mockReset();
@@ -388,3 +390,73 @@ describe('GET /ready and GET /health/readiness return identical responses', () =
     expect(normalizeTiming(a.body)).toEqual(normalizeTiming(b.body));
   });
 });
+
+describe('readiness DB heartbeat throttling (#99)', () => {
+  beforeEach(() => {
+    resetDbWritableThrottle();
+  });
+
+  afterEach(() => {
+    resetDbWritableThrottle();
+    mockGetDriver.mockReset();
+    mockGetDriver.mockImplementation(getRealDriver);
+  });
+
+  it('produces at most one indexer_state write for two probes within throttle interval', async () => {
+    mockCheckHealth.mockResolvedValue(undefined);
+    let runCallCount = 0;
+    const realDriver = getRealDriver();
+
+    mockGetDriver.mockImplementation(() =>
+      driverWith({
+        run: async (sql: string, params?: unknown[]) => {
+          if (sql.includes('health_heartbeat')) {
+            runCallCount++;
+          }
+          return realDriver.run(sql, params);
+        },
+      }),
+    );
+
+    const res1 = await request(app).get('/ready');
+    expect(res1.status).toBe(200);
+    expect(probeStatus(res1.body.services.db)).toBe('ok');
+    expect(runCallCount).toBe(1);
+
+    // Immediate second probe within throttle window
+    const res2 = await request(app).get('/ready');
+    expect(res2.status).toBe(200);
+    expect(probeStatus(res2.body.services.db)).toBe('ok');
+    expect(runCallCount).toBe(1); // Still exactly 1 write!
+  });
+
+  it('reports a genuinely read-only/full DB as unavailable on subsequent probes within throttle window', async () => {
+    mockCheckHealth.mockResolvedValue(undefined);
+    let runCallCount = 0;
+
+    mockGetDriver.mockImplementation(() =>
+      driverWith({
+        run: async (sql: string) => {
+          if (sql.includes('health_heartbeat')) {
+            runCallCount++;
+            throw new Error('SQLITE_READONLY: attempt to write a readonly database');
+          }
+          return { changes: 1, lastId: 0 };
+        },
+      }),
+    );
+
+    // First probe: write fails
+    const res1 = await request(app).get('/ready');
+    expect(res1.status).toBe(503);
+    expect(probeStatus(res1.body.services.db)).toBe('unavailable');
+    expect(runCallCount).toBe(1);
+
+    // Second probe within throttle window: failure was not cached as ok, still fails
+    const res2 = await request(app).get('/ready');
+    expect(res2.status).toBe(503);
+    expect(probeStatus(res2.body.services.db)).toBe('unavailable');
+    expect(runCallCount).toBe(2);
+  });
+});
+
