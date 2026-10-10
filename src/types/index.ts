@@ -182,6 +182,8 @@ declare global {
       apiKeyScopes?: string[] | null;
       /** Database id of the API key used for this request, when authenticated via X-API-Key. */
       apiKeyId?: number;
+      /** Validated and sanitized request params (set by validate middleware). */
+      validatedParams?: unknown;
     }
   }
 }
