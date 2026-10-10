@@ -157,7 +157,7 @@ jobs:
         id: set-url
         run: echo "url=${{ secrets.MAINNET_URL }}" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v7
         with:
           name: mainnet-release
 
