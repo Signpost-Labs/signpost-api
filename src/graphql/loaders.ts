@@ -11,6 +11,7 @@
  */
 
 import DataLoader from 'dataloader';
+import config from '../config';
 import { queryEvents } from '../db';
 import { queryMilestones } from '../services/stellar';
 import { withConcurrencyLimit } from '../utils/concurrency';
@@ -71,11 +72,7 @@ async function batchLoadMilestones(
   // every other request for the shared RPC client and circuit-breaker budget.
   //
   // MILESTONE_LOADER_CONCURRENCY caps the number of in-flight RPC calls.
-  // Default: 8.  Configurable via the MILESTONE_LOADER_CONCURRENCY env var.
-  const concurrencyLimit = parseInt(
-    process.env.MILESTONE_LOADER_CONCURRENCY ?? '8',
-    10,
-  );
+  const concurrencyLimit = config.milestoneLoaderConcurrency;
 
   const onChainResults = await withConcurrencyLimit(
     playerIds.map((pid) => () => queryMilestones(pid)),
