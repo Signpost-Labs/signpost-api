@@ -1,4 +1,4 @@
-# Security Policy
+﻿# Security Policy
 
 ## Supported Versions
 
@@ -52,7 +52,7 @@ puts all Promiscope users at risk.
      so over email — do not attach live exploit code).
    - The potential impact (data exposure, auth bypass, denial of service, etc.).
    - Your suggested fix, if you have one.
-3. **Allow 7 days** for an initial response before any public disclosure.
+3. **Allow the first-response SLA for the reported severity level (see table above)** before any public disclosure.
    We aim to acknowledge reports within 48 hours and provide a resolution
    timeline within 7 days.
 
