@@ -1,4 +1,4 @@
-# npm dependency caching: every actions/setup-node step below sets
+﻿# npm dependency caching: every actions/setup-node step below sets
 # `cache: npm`, which caches ~/.npm keyed on the runner OS, the Node.js
 # version, and a hash of package-lock.json. A cache hit skips re-downloading
 # packages during `npm ci`, cutting install time from ~60-90s to well under
@@ -123,7 +123,9 @@ jobs:
       # version .nvmrc pins (22) to keep this identical to the prior
       # single-version behavior instead of uploading/overwriting Nx.
       - name: Upload coverage to Codecov
-        if: matrix.node-version == 22
+        if: matrix.node-version == 22 && env.CODECOV_TOKEN != ''
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -142,7 +144,7 @@ jobs:
   # can never silently regress. Excludes suites that still use sync getDb() /
   # SQLite-specific APIs, or that assume synchronous DB writes / re-init the
   # module registry with jest.resetModules() (which strips the awaited
-  # initDb() the Postgres driver needs) — see docs/postgres-migration.md FAQ.
+  # initDb() the Postgres driver needs) 鈥?see docs/postgres-migration.md FAQ.
   # Keep exclusions aligned with tests/postgres-exclusions.json (via npm run test:postgres).
   postgres:
     runs-on: ubuntu-latest
@@ -350,11 +352,11 @@ jobs:
           while [ $attempt -lt $max_attempts ]; do
             status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:4000/health/liveness 2>/dev/null || echo "000")
             if [ "$status" = "200" ]; then
-              echo "✓ /health/liveness returned 200 after ${attempt}s"
+              echo "鉁?/health/liveness returned 200 after ${attempt}s"
               break
             fi
             if [ $attempt -eq $((max_attempts - 1)) ]; then
-              echo "✗ Server failed to become healthy within ${max_attempts}s"
+              echo "鉁?Server failed to become healthy within ${max_attempts}s"
               docker logs promiscope-ci
               docker stop promiscope-ci || true
               exit 1
@@ -367,12 +369,12 @@ jobs:
           for endpoint in "/health/liveness" "/health/readiness"; do
             status=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:4000${endpoint}")
             if [ "$status" != "200" ]; then
-              echo "✗ ${endpoint} returned ${status}, expected 200"
+              echo "鉁?${endpoint} returned ${status}, expected 200"
               docker logs promiscope-ci
               docker stop promiscope-ci || true
               exit 1
             fi
-            echo "✓ ${endpoint} returned 200"
+            echo "鉁?${endpoint} returned 200"
           done
 
           # Test a DB-backed endpoint by creating a test player and checking it
@@ -382,9 +384,9 @@ jobs:
           if [ "$status" = "401" ] || [ "$status" = "200" ]; then
             # 401 = auth failed but endpoint exists and tried to check auth (good)
             # 200 = endpoint fully worked (also good)
-            echo "✓ DB-backed endpoint /api/players responded with HTTP $status (DB accessible)"
+            echo "鉁?DB-backed endpoint /api/players responded with HTTP $status (DB accessible)"
           else
-            echo "✗ /api/players returned ${status}, expected 401 or 200"
+            echo "鉁?/api/players returned ${status}, expected 401 or 200"
             docker logs promiscope-ci
             docker stop promiscope-ci || true
             exit 1
