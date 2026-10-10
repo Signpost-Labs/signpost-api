@@ -67,6 +67,42 @@ export async function verifyAuditChainFull(deadlineMs?: number): Promise<AuditCh
     const batch = allRows.slice(batchStart, batchEnd);
 
     for (const row of batch) {
+      if (!row.hash || row.hash.length === 0) {
+        const violation: AuditViolation = {
+          id: row.id,
+          expected_hash: 'non-empty hash',
+          stored_hash: row.hash ?? '',
+          audit_event_type: row.action,
+          created_at: row.created_at,
+        };
+        violations.push(violation);
+        logger.warn(
+          { id: row.id, stored_hash: row.hash },
+          'audit chain violation detected: zero-length or empty hash',
+        );
+        expectedPrevHash = row.hash;
+        rowsChecked += 1;
+        continue;
+      }
+
+      if (row.prev_hash !== null && row.prev_hash.length === 0) {
+        const violation: AuditViolation = {
+          id: row.id,
+          expected_hash: expectedPrevHash,
+          stored_hash: row.hash,
+          audit_event_type: row.action,
+          created_at: row.created_at,
+        };
+        violations.push(violation);
+        logger.warn(
+          { id: row.id, prev_hash: row.prev_hash },
+          'audit chain violation detected: zero-length prev_hash',
+        );
+        expectedPrevHash = row.hash;
+        rowsChecked += 1;
+        continue;
+      }
+
       const expectedHash = computeChainHash(
         auditChainContent({
           action: row.action,
@@ -133,6 +169,24 @@ export async function verifyAuditChain(): Promise<AuditChainVerification> {
   let expectedPrevHash = GENESIS_HASH;
 
   for (const row of rows) {
+    if (!row.hash || row.hash.length === 0) {
+      return {
+        valid: false,
+        brokenAtId: row.id,
+        reason: `row ${row.id}: stored hash is empty or zero-length`,
+        rowsChecked: rows.length,
+      };
+    }
+
+    if (row.prev_hash !== null && row.prev_hash.length === 0) {
+      return {
+        valid: false,
+        brokenAtId: row.id,
+        reason: `row ${row.id}: stored prev_hash is empty or zero-length`,
+        rowsChecked: rows.length,
+      };
+    }
+
     if (row.prev_hash !== expectedPrevHash) {
       return {
         valid: false,

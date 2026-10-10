@@ -1790,6 +1790,14 @@ export async function insertAuditLog(p: {
         prevHash
       );
 
+      if (!hash || hash.trim().length === 0) {
+        throw new Error('Failed to compute audit log hash: computed hash is empty');
+      }
+
+      if (prevHash !== null && prevHash.trim().length === 0) {
+        throw new Error('Invalid audit log chain: prev_hash cannot be empty');
+      }
+
       const info = await tx.run(
         `INSERT INTO audit_log (action, admin_wallet, query_params, created_at, prev_hash, hash, event_source)
          VALUES (?, ?, ?, ?, ?, ?, ?) RETURNING id`,

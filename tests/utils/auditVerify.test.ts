@@ -1,6 +1,6 @@
 import { getDriver, insertAuditLog } from '../../src/db';
 import { recordAudit } from '../../src/utils/audit';
-import { verifyAuditChain } from '../../src/utils/auditVerify';
+import { verifyAuditChain, verifyAuditChainFull } from '../../src/utils/auditVerify';
 
 describe('verifyAuditChain (#464)', () => {
   beforeEach(async () => {
@@ -67,5 +67,23 @@ describe('verifyAuditChain (#464)', () => {
     const result = await verifyAuditChain();
     expect(result.valid).toBe(false);
     expect(result.brokenAtId).toBe(r2.id);
+  });
+
+  it('detects an empty hash (zero-length hash)', async () => {
+    await insertAuditLog({ action: 'a', adminWallet: 'G1', queryParams: {}, createdAt: '2025-01-01T00:00:00.000Z' });
+    const r2 = await insertAuditLog({ action: 'b', adminWallet: 'G2', queryParams: {}, createdAt: '2025-01-02T00:00:00.000Z' });
+
+    await getDriver().run('PRAGMA ignore_check_constraints = ON');
+    await getDriver().run('UPDATE audit_log SET hash = ? WHERE id = ?', ['', r2.id]);
+    await getDriver().run('PRAGMA ignore_check_constraints = OFF');
+
+    const result = await verifyAuditChain();
+    expect(result.valid).toBe(false);
+    expect(result.brokenAtId).toBe(r2.id);
+    expect(result.reason).toMatch(/empty|zero-length/i);
+
+    const fullResult = await verifyAuditChainFull();
+    expect(fullResult.status).toBe('tampered');
+    expect(fullResult.violations.some((v) => v.id === r2.id)).toBe(true);
   });
 });

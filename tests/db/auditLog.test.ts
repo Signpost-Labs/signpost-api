@@ -126,6 +126,28 @@ describeSqliteOnly('audit_log NOT NULL enforcement — SQLite (#1014)', () => {
         .run('test', 'GADMIN', '{}', new Date().toISOString(), 'f'.repeat(64)),
     ).toThrow(/NOT NULL/i);
   });
+
+  it('rejects an insert with an empty hash string', () => {
+    expect(() =>
+      getDb()
+        .prepare(
+          `INSERT INTO audit_log (action, admin_wallet, query_params, created_at, hash, event_source)
+           VALUES (?, ?, ?, ?, '', ?)`,
+        )
+        .run('test', 'GADMIN', '{}', new Date().toISOString(), 'admin_action'),
+    ).toThrow(/CHECK constraint failed: chk_audit_log_hash_non_empty/i);
+  });
+
+  it('rejects an insert with an empty prev_hash string', () => {
+    expect(() =>
+      getDb()
+        .prepare(
+          `INSERT INTO audit_log (action, admin_wallet, query_params, created_at, prev_hash, hash, event_source)
+           VALUES (?, ?, ?, ?, '', ?, ?)`,
+        )
+        .run('test', 'GADMIN', '{}', new Date().toISOString(), 'f'.repeat(64), 'admin_action'),
+    ).toThrow(/CHECK constraint failed: chk_audit_log_prev_hash_non_empty/i);
+  });
 });
 
 // ─── Concurrent-write durability (#1014) ───────────────────────────────────────
