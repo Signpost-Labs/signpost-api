@@ -35,6 +35,7 @@ import { ErrorCode } from '../utils/errorCodes';
 import { insertTrialOffer, getTrialOffers } from '../services/indexer';
 import { invokeContract, strVal } from '../utils/contract';
 import { isValidIpfsOrHttpsUri } from '../utils/uriValidator';
+import { formatCsvRow } from '../utils/csv';
 
 /**
  * HTTP status for each PaymentError code (Issue #761).
@@ -782,7 +783,7 @@ export async function getPaymentHistory(req: Request, res: Response, next: NextF
   if (format === 'csv') {
     const csvHeader = 'id,type,amount_xlm,player_id,tier,tx_hash,created_at\n';
     const csvRows = payments.map((p) =>
-      [
+      formatCsvRow([
         p.id ?? '',
         p.type,
         p.amount_xlm,
@@ -790,9 +791,7 @@ export async function getPaymentHistory(req: Request, res: Response, next: NextF
         p.tier ?? '',
         p.tx_hash ?? '',
         p.created_at,
-      ]
-        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-        .join(','),
+      ]),
     );
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', 'attachment; filename="payments.csv"');
