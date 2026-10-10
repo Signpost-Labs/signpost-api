@@ -46,6 +46,9 @@ export async function updateApiKeyMonthlyQuota(
   keyId: number,
   monthlyQuota: number | null
 ): Promise<void> {
+  if (monthlyQuota !== null && monthlyQuota < 0) {
+    throw new Error('monthly_quota must be non-negative or null');
+  }
   const driver = getDriver();
   await driver.run(
     'UPDATE api_keys SET monthly_quota = ? WHERE id = ?',
@@ -69,6 +72,9 @@ export async function getApiKeyUsage(keyId: number, period: string): Promise<num
  * Record or update API key usage for a specific period.
  */
 export async function recordApiKeyUsage(keyId: number, period: string, count: number): Promise<void> {
+  if (count < 0) {
+    throw new Error('request_count must be non-negative');
+  }
   const driver = getDriver();
   const now = Math.floor(Date.now() / 1000);
   await driver.run(
