@@ -1,155 +1,117 @@
-﻿# npm dependency caching: every actions/setup-node step below sets
-# `cache: npm`, which caches ~/.npm keyed on the runner OS, the Node.js
-# version, and a hash of package-lock.json. A cache hit skips re-downloading
-# packages during `npm ci`, cutting install time from ~60-90s to well under
-# 10s. The cache is automatically invalidated whenever package-lock.json
-# changes, so dependency updates always install cleanly.
 name: Backend CI
-
 on:
   push:
-    branches: [main, dev]
+    branches:
+    - main
+    - dev
   pull_request:
-    branches: [main]
-
+    branches:
+    - main
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
-
 jobs:
   lint:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     strategy:
       fail-fast: false
       matrix:
-        node-version: [22, 24]
-
+        node-version:
+        - 22
+        - 24
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-
-      - run: npm ci
-
-      - name: Lint
-        run: npm run lint
-
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v6
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: npm
+    - run: npm ci
+    - name: Lint
+      run: npm run lint
   test:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     strategy:
       fail-fast: false
       matrix:
-        node-version: [22, 24]
-
+        node-version:
+        - 22
+        - 24
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
-
-      - run: npm ci
-
-      # GitHub-hosted runners intermittently lose connectivity to the
-      # azure.archive.ubuntu.com mirror, making apt-get update hang or time
-      # out (observed stalling a whole job until its 30-minute budget). Point
-      # apt at the main archive mirror instead, then bound the update with a
-      # timeout and enable retries as a backstop.
-      - name: Install sqlite3 CLI
-        run: |
-          sudo sed -i 's|//azure\.archive\.ubuntu\.com|//archive.ubuntu.com|g' \
-            /etc/apt/sources.list /etc/apt/sources.list.d/*.sources /etc/apt/apt-mirrors.txt 2>/dev/null || true
-          timeout 180 sudo apt-get update -o Acquire::Retries=3 -o Acquire::http::Timeout=15
-          sudo apt-get install -y --no-install-recommends sqlite3
-
-      - name: Validate env example
-        run: node scripts/validate-env.js --strict-extras
-
-      - name: Check every route has canonical-source documentation
-        run: npm run docs:check
-
-      - name: Validate OpenAPI spec is in sync with route sources
-        run: npm run validate:openapi
-
-      - name: Validate generated TypeScript client
-        run: npm run validate:client
-
-      - name: Type check generated TypeScript client
-        run: npm run typecheck:client
-
-      - name: Check for unsafe SQL string interpolation
-        run: npm run check:sql-injection
-
-      # The Helm chart's defaults must stay internally consistent: SQLite is
-      # single-process, so the default topology is one replica with HPA/PDB
-      # disabled, and the SQLite + multi-replica combination must be loudly
-      # flagged in NOTES.txt. Runs on every Node version in the matrix; helm
-      # is preinstalled on ubuntu-latest runners.
-      - name: Validate Helm chart topology defaults
-        run: bash scripts/validate-helm-chart.sh
-
-      # Every production-required env var from src/config.ts must be wired
-      # into the rendered Helm deployment manifest (issue #1043). This check
-      # renders the chart and greps for each required variable name, so a
-      # future change that adds a new required secret cannot silently omit
-      # the corresponding secretKeyRef without breaking CI.
-      - name: Validate Helm env-var wiring (issue #1043)
-        run: bash scripts/validate-helm-env-wiring.sh
-
-      - name: Type check (src)
-        run: node node_modules/.bin/tsc --noEmit
-
-      - name: Type check (scripts)
-        run: node node_modules/.bin/tsc --noEmit -p tsconfig.scripts.json
-
-      - name: Run tests with coverage
-        # node_modules/.bin/jest is unreliable here: jest and jest-cli are
-        # both hoisted to top-level node_modules and both declare a bin
-        # literally named "jest", so npm can't deterministically symlink it.
-        # Invoke via the npm script which calls jest's own bin directly.
-        run: npm run test:coverage -- --forceExit --coverageReporters=text --coverageReporters=lcov
-        env:
-          CONTRACT_ID: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4
-
-      # Coverage is only representative once, so upload it from the Node
-      # version .nvmrc pins (22) to keep this identical to the prior
-      # single-version behavior instead of uploading/overwriting Nx.
-      - name: Upload coverage to Codecov
-        if: matrix.node-version == 22 && env.CODECOV_TOKEN != ''
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
-        uses: codecov/codecov-action@v4
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage/lcov.info
-          fail_ci_if_error: false
-
-      - name: Upload coverage report as artifact
-        if: matrix.node-version == 22
-        uses: actions/upload-artifact@v6
-        with:
-          name: coverage-report
-          path: coverage/
-
-  # Runs the same suite as `test` above but against a real PostgreSQL service
-  # container with DB_DRIVER=postgres, so the Postgres driver path (#1014)
-  # can never silently regress. Excludes suites that still use sync getDb() /
-  # SQLite-specific APIs, or that assume synchronous DB writes / re-init the
-  # module registry with jest.resetModules() (which strips the awaited
-  # initDb() the Postgres driver needs) 鈥?see docs/postgres-migration.md FAQ.
-  # Keep exclusions aligned with tests/postgres-exclusions.json (via npm run test:postgres).
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v6
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: npm
+    - run: npm ci
+    - name: Install sqlite3 CLI
+      run: "sudo sed -i 's|//azure\\.archive\\.ubuntu\\.com|//archive.ubuntu.com|g'\
+        \ \\\n  /etc/apt/sources.list /etc/apt/sources.list.d/*.sources /etc/apt/apt-mirrors.txt\
+        \ 2>/dev/null || true\ntimeout 180 sudo apt-get update -o Acquire::Retries=3\
+        \ -o Acquire::http::Timeout=15\nsudo apt-get install -y --no-install-recommends\
+        \ sqlite3\n"
+    - name: Validate env example
+      run: node scripts/validate-env.js --strict-extras
+    - name: Check every route has canonical-source documentation
+      run: npm run docs:check
+    - name: Validate OpenAPI spec is in sync with route sources
+      run: npm run validate:openapi
+    - name: Validate generated TypeScript client
+      run: npm run validate:client
+    - name: Type check generated TypeScript client
+      run: npm run typecheck:client
+    - name: Check for unsafe SQL string interpolation
+      run: npm run check:sql-injection
+    - name: Validate Helm chart topology defaults
+      run: bash scripts/validate-helm-chart.sh
+    - name: Validate Helm env-var wiring (issue
+      run: bash scripts/validate-helm-env-wiring.sh
+    - name: Type check (src)
+      run: node node_modules/.bin/tsc --noEmit
+    - name: Type check (scripts)
+      run: node node_modules/.bin/tsc --noEmit -p tsconfig.scripts.json
+    - name: Run tests with coverage
+      run: npm run test:coverage -- --forceExit --coverageReporters=text --coverageReporters=lcov
+      env:
+        CONTRACT_ID: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4
+    - name: Upload coverage to Codecov
+      if: matrix.node-version == 22 && env.CODECOV_TOKEN != ''
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage/lcov.info
+        fail_ci_if_error: false
+    - name: Upload coverage report as artifact
+      if: matrix.node-version == 22
+      uses: actions/upload-artifact@v6
+      with:
+        name: coverage-report
+        path: coverage/
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: npm
+    - name: Validate env example
+      run: node scripts/validate-env.js
+    - name: Upload coverage to Codecov
+      if: matrix.node-version == 22
+      uses: codecov/codecov-action@v7
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage/lcov.info
+        fail_ci_if_error: false
+    - name: Upload coverage report as artifact
+      if: matrix.node-version == 22
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage/
   postgres:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     services:
       postgres:
         image: postgres:16-alpine
@@ -158,308 +120,189 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: promiscope_ci
         ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
+        - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s
           --health-retries 5
-
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
-      - run: npm ci
-
-      - name: Type check (src)
-        run: node node_modules/.bin/tsc --noEmit
-
-      - name: Run test suite against DB_DRIVER=postgres
-        run: npm run test:postgres
-        env:
-          DB_DRIVER: postgres
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432/promiscope_ci
-          POSTGRES_TEST_URL: postgres://postgres:postgres@localhost:5432/promiscope_ci
-          CONTRACT_ID: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4
-
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+    - run: npm ci
+    - name: Type check (src)
+      run: node node_modules/.bin/tsc --noEmit
+    - name: Run test suite against DB_DRIVER=postgres
+      run: npm run test:postgres
+      env:
+        DB_DRIVER: postgres
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/promiscope_ci
+        POSTGRES_TEST_URL: postgres://postgres:postgres@localhost:5432/promiscope_ci
+        CONTRACT_ID: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4
   redis-integration:
     name: Redis integration
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     services:
       redis:
         image: redis:7-alpine
         ports:
-          - 6379:6379
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
+        - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout
+          5s --health-retries 5
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
-      - run: npm ci
-
-      - name: Run integration tests against Redis
-        run: node node_modules/jest/bin/jest.js --runInBand --forceExit --runTestsByPath tests/services/redis.integration.test.ts
-        env:
-          REDIS_URL: redis://127.0.0.1:6379
-
-  # Catches "compiles but doesn't run" regressions (bad import path, missing
-  # runtime asset like db/ migrations or openapi files) that tsc alone can't
-  # see, since nothing else in this workflow boots the compiled dist/ output.
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+    - run: npm ci
+    - name: Run integration tests against Redis
+      run: node node_modules/jest/bin/jest.js --runInBand --forceExit --runTestsByPath
+        tests/services/redis.integration.test.ts
+      env:
+        REDIS_URL: redis://127.0.0.1:6379
   smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
-      - run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Boot dist/index.js and wait for /health
-        env:
-          NODE_ENV: test
-          PORT: 4000
-          DB_PATH: /tmp/smoke-test.db
-          JWT_SECRET: test-secret-min-32-chars-for-ci-only
-          CONTRACT_ID: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4
-        run: |
-          node dist/index.js &
-          SERVER_PID=$!
-
-          for i in $(seq 1 30); do
-            if curl -sf http://localhost:4000/health > /dev/null; then
-              echo "Server is up after ${i}s"
-              break
-            fi
-            if ! kill -0 $SERVER_PID 2>/dev/null; then
-              echo "Server process exited before becoming healthy"
-              exit 1
-            fi
-            sleep 1
-          done
-
-          status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:4000/health)
-          if [ "$status" != "200" ]; then
-            echo "Expected 200 from /health, got $status"
-            kill "$SERVER_PID" 2>/dev/null || true
-            exit 1
-          fi
-
-          kill -TERM "$SERVER_PID"
-          wait "$SERVER_PID" || true
-
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+    - run: npm ci
+    - name: Build
+      run: npm run build
+    - name: Boot dist/index.js and wait for /health
+      env:
+        NODE_ENV: test
+        PORT: 4000
+        DB_PATH: /tmp/smoke-test.db
+        JWT_SECRET: test-secret-min-32-chars-for-ci-only
+        CONTRACT_ID: CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4
+      run: "node dist/index.js &\nSERVER_PID=$!\n\nfor i in $(seq 1 30); do\n  if\
+        \ curl -sf http://localhost:4000/health > /dev/null; then\n    echo \"Server\
+        \ is up after ${i}s\"\n    break\n  fi\n  if ! kill -0 $SERVER_PID 2>/dev/null;\
+        \ then\n    echo \"Server process exited before becoming healthy\"\n    exit\
+        \ 1\n  fi\n  sleep 1\ndone\n\nstatus=$(curl -s -o /dev/null -w '%{http_code}'\
+        \ http://localhost:4000/health)\nif [ \"$status\" != \"200\" ]; then\n  echo\
+        \ \"Expected 200 from /health, got $status\"\n  kill \"$SERVER_PID\" 2>/dev/null\
+        \ || true\n  exit 1\nfi\n\nkill -TERM \"$SERVER_PID\"\nwait \"$SERVER_PID\"\
+        \ || true\n"
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version-file: '.nvmrc'
-          cache: npm
-
-      - run: npm ci
-
-      # Dev-only tooling (eslint, jest, etc.) never ships to production, so
-      # only production dependencies gate the build. See CONTRIBUTING.md's
-      # "CI Enforcement & Exception Process" for what to do when this fails
-      # on a legitimately unpatchable finding.
-      - name: Audit production dependencies (high/critical)
-        run: npm audit --omit=dev --audit-level=high
-
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v6
+      with:
+        node-version-file: .nvmrc
+        cache: npm
+    - run: npm ci
+    - name: Audit production dependencies (high/critical)
+      run: npm audit --omit=dev --audit-level=high
   docker:
     name: Docker build
     runs-on: ubuntu-latest
     timeout-minutes: 20
-
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Build Docker image with OCI build args
-        run: |
-          BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-          VERSION=$(node -p "require('./package.json').version")
-          docker build \
-            --build-arg GIT_COMMIT=${{ github.sha }} \
-            --build-arg VERSION="${VERSION}" \
-            --build-arg BUILD_DATE="${BUILD_DATE}" \
-            --tag promiscope-backend:ci \
-            .
-
-      - name: Scan Docker image for vulnerabilities
-        # Pinned by commit SHA (v0.36.0): upstream retagged its releases with a
-        # `v` prefix, so the old `0.30.0` ref no longer resolves, and a SHA
-        # cannot be silently re-pointed the way a tag can.
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        with:
-          image-ref: promiscope-backend:ci
-          format: table
-          exit-code: '1'
-          ignore-unfixed: true
-          vuln-type: os,library
-          severity: HIGH,CRITICAL
-
-      - name: Verify GIT_COMMIT is set in the image
-        run: |
-          commit=$(docker run --rm \
-            -e CONTRACT_ID=CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4 \
-            -e JWT_SECRET=test-secret-min-32-chars-for-ci-only \
-            promiscope-backend:ci \
-            node -e "console.log(process.env.GIT_COMMIT)")
-          echo "GIT_COMMIT in image: $commit"
-          test "$commit" = "${{ github.sha }}"
-
-      - name: Docker smoke test - verify app boots and health endpoints work
-        run: |
-          # Run the container with test env vars, binding port 4000
-          docker run --rm -d \
-            --name promiscope-ci \
-            -p 4000:4000 \
-            -e NODE_ENV=test \
-            -e PORT=4000 \
-            -e DB_PATH=/data/promiscope.db \
-            -e CONTRACT_ID=CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4 \
-            -e JWT_SECRET=test-secret-min-32-chars-for-ci-only \
-            promiscope-backend:ci
-          
-          # Wait for the app to become healthy
-          attempt=0
-          max_attempts=30
-          while [ $attempt -lt $max_attempts ]; do
-            status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:4000/health/liveness 2>/dev/null || echo "000")
-            if [ "$status" = "200" ]; then
-              echo "鉁?/health/liveness returned 200 after ${attempt}s"
-              break
-            fi
-            if [ $attempt -eq $((max_attempts - 1)) ]; then
-              echo "鉁?Server failed to become healthy within ${max_attempts}s"
-              docker logs promiscope-ci
-              docker stop promiscope-ci || true
-              exit 1
-            fi
-            sleep 1
-            attempt=$((attempt + 1))
-          done
-
-          # Test health endpoints
-          for endpoint in "/health/liveness" "/health/readiness"; do
-            status=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:4000${endpoint}")
-            if [ "$status" != "200" ]; then
-              echo "鉁?${endpoint} returned ${status}, expected 200"
-              docker logs promiscope-ci
-              docker stop promiscope-ci || true
-              exit 1
-            fi
-            echo "鉁?${endpoint} returned 200"
-          done
-
-          # Test a DB-backed endpoint by creating a test player and checking it
-          # The /api/players endpoint should work if DB is initialized
-          status=$(curl -s -o /dev/null -w '%{http_code}' -X GET "http://localhost:4000/api/players" \
-            -H "Authorization: Bearer test-token" 2>/dev/null || echo "000")
-          if [ "$status" = "401" ] || [ "$status" = "200" ]; then
-            # 401 = auth failed but endpoint exists and tried to check auth (good)
-            # 200 = endpoint fully worked (also good)
-            echo "鉁?DB-backed endpoint /api/players responded with HTTP $status (DB accessible)"
-          else
-            echo "鉁?/api/players returned ${status}, expected 401 or 200"
-            docker logs promiscope-ci
-            docker stop promiscope-ci || true
-            exit 1
-          fi
-
-          # Get image size for regression detection
-          image_size=$(docker images --no-trunc --quiet promiscope-backend:ci | xargs docker inspect -f '{{.Size}}')
-          image_size_mb=$((image_size / 1024 / 1024))
-          echo "Docker image size: ${image_size_mb}MB"
-          
-          docker stop promiscope-ci
-          
-          # Fail if image grew by >10% from a baseline (this is a soft check; adjust as needed)
-          # For now just report it; future PRs can establish a baseline
-          echo "::notice::Docker image: ${image_size_mb}MB (check regression vs prior builds)"
-
+    - uses: actions/checkout@v4
+    - name: Build Docker image with OCI build args
+      run: "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')\nVERSION=$(node -p \"require('./package.json').version\"\
+        )\ndocker build \\\n  --build-arg GIT_COMMIT=${{ github.sha }} \\\n  --build-arg\
+        \ VERSION=\"${VERSION}\" \\\n  --build-arg BUILD_DATE=\"${BUILD_DATE}\" \\\
+        \n  --tag promiscope-backend:ci \\\n  .\n"
+    - name: Scan Docker image for vulnerabilities
+      uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25
+      with:
+        image-ref: promiscope-backend:ci
+        format: table
+        exit-code: '1'
+        ignore-unfixed: true
+        vuln-type: os,library
+        severity: HIGH,CRITICAL
+    - name: Verify GIT_COMMIT is set in the image
+      run: "commit=$(docker run --rm \\\n  -e CONTRACT_ID=CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4\
+        \ \\\n  -e JWT_SECRET=test-secret-min-32-chars-for-ci-only \\\n  promiscope-backend:ci\
+        \ \\\n  node -e \"console.log(process.env.GIT_COMMIT)\")\necho \"GIT_COMMIT\
+        \ in image: $commit\"\ntest \"$commit\" = \"${{ github.sha }}\"\n"
+    - name: Docker smoke test - verify app boots and health endpoints work
+      run: "# Run the container with test env vars, binding port 4000\ndocker run\
+        \ --rm -d \\\n  --name promiscope-ci \\\n  -p 4000:4000 \\\n  -e NODE_ENV=test\
+        \ \\\n  -e PORT=4000 \\\n  -e DB_PATH=/data/promiscope.db \\\n  -e CONTRACT_ID=CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABSC4\
+        \ \\\n  -e JWT_SECRET=test-secret-min-32-chars-for-ci-only \\\n  promiscope-backend:ci\n\
+        \n# Wait for the app to become healthy\nattempt=0\nmax_attempts=30\nwhile\
+        \ [ $attempt -lt $max_attempts ]; do\n  status=$(curl -s -o /dev/null -w '%{http_code}'\
+        \ http://localhost:4000/health/liveness 2>/dev/null || echo \"000\")\n  if\
+        \ [ \"$status\" = \"200\" ]; then\n    echo \"鉁?/health/liveness returned\
+        \ 200 after ${attempt}s\"\n    break\n  fi\n  if [ $attempt -eq $((max_attempts\
+        \ - 1)) ]; then\n    echo \"鉁?Server failed to become healthy within ${max_attempts}s\"\
+        \n    docker logs promiscope-ci\n    docker stop promiscope-ci || true\n \
+        \   exit 1\n  fi\n  sleep 1\n  attempt=$((attempt + 1))\ndone\n\n# Test health\
+        \ endpoints\nfor endpoint in \"/health/liveness\" \"/health/readiness\"; do\n\
+        \  status=$(curl -s -o /dev/null -w '%{http_code}' \"http://localhost:4000${endpoint}\"\
+        )\n  if [ \"$status\" != \"200\" ]; then\n    echo \"鉁?${endpoint} returned\
+        \ ${status}, expected 200\"\n    docker logs promiscope-ci\n    docker stop\
+        \ promiscope-ci || true\n    exit 1\n  fi\n  echo \"鉁?${endpoint} returned\
+        \ 200\"\ndone\n\n# Test a DB-backed endpoint by creating a test player and\
+        \ checking it\n# The /api/players endpoint should work if DB is initialized\n\
+        status=$(curl -s -o /dev/null -w '%{http_code}' -X GET \"http://localhost:4000/api/players\"\
+        \ \\\n  -H \"Authorization: Bearer test-token\" 2>/dev/null || echo \"000\"\
+        )\nif [ \"$status\" = \"401\" ] || [ \"$status\" = \"200\" ]; then\n  # 401\
+        \ = auth failed but endpoint exists and tried to check auth (good)\n  # 200\
+        \ = endpoint fully worked (also good)\n  echo \"鉁?DB-backed endpoint /api/players\
+        \ responded with HTTP $status (DB accessible)\"\nelse\n  echo \"鉁?/api/players\
+        \ returned ${status}, expected 401 or 200\"\n  docker logs promiscope-ci\n\
+        \  docker stop promiscope-ci || true\n  exit 1\nfi\n\n# Get image size for\
+        \ regression detection\nimage_size=$(docker images --no-trunc --quiet promiscope-backend:ci\
+        \ | xargs docker inspect -f '{{.Size}}')\nimage_size_mb=$((image_size / 1024\
+        \ / 1024))\necho \"Docker image size: ${image_size_mb}MB\"\n\ndocker stop\
+        \ promiscope-ci\n\n# Fail if image grew by >10% from a baseline (this is a\
+        \ soft check; adjust as needed)\n# For now just report it; future PRs can\
+        \ establish a baseline\necho \"::notice::Docker image: ${image_size_mb}MB\
+        \ (check regression vs prior builds)\"\n"
   contracts:
     name: Soroban Contracts
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: 1.81.0
+        targets: wasm32-unknown-unknown
+        components: clippy, rustfmt
+    - name: Cache Cargo registry
+      uses: actions/cache@v4
+      with:
+        path: '~/.cargo/registry
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          toolchain: 1.81.0
-          targets: wasm32-unknown-unknown
-          components: clippy, rustfmt
+          ~/.cargo/git
 
-      - name: Cache Cargo registry
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            contracts/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('contracts/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          contracts/target
 
-      - name: Build contracts (WASM)
-        working-directory: contracts
-        run: cargo build --target wasm32-unknown-unknown --release
-
-      - name: Check formatting
-        working-directory: contracts
-        run: cargo fmt --all -- --check
-
-      - name: Run Clippy
-        working-directory: contracts
-        run: cargo clippy --workspace --all-targets --target x86_64-unknown-linux-gnu -- -D warnings
-
-      - name: Report optimized WASM sizes
-        run: bash scripts/report-contract-wasm-size.sh
-
-      # contracts/.cargo/config.toml sets wasm32-unknown-unknown as the
-      # default build target for this workspace, so host-target commands
-      # must pass --target explicitly or they'll silently try to build (and
-      # fail to link/run) against wasm instead.
-      - name: Run unit tests
-        working-directory: contracts
-        run: cargo test --workspace --lib --target x86_64-unknown-linux-gnu
-
-      # Property-based invariant fuzz tests live in each contract's tests/ directory.
-      # PROPTEST_CASES controls the number of random inputs per test via each
-      # file's own proptest_cases() helper. The default is 10 000, which alone
-      # takes ~27 minutes for the connection contract and blows this job's
-      # timeout; CI overrides this to a lower number for fast feedback within
-      # its time budget, keeping the full 10 000 run available locally and on
-      # nightly. Mirrors contract-ci.yml's invariant fuzz test step.
-      - name: Run invariant fuzz tests
-        working-directory: contracts
-        env:
-          PROPTEST_CASES: ${{ vars.PROPTEST_CASES || '256' }}
-        run: cargo test --workspace --tests --target x86_64-unknown-linux-gnu -- invariants
+          '
+        key: ${{ runner.os }}-cargo-${{ hashFiles('contracts/Cargo.lock') }}
+        restore-keys: ${{ runner.os }}-cargo-
+    - name: Build contracts (WASM)
+      working-directory: contracts
+      run: cargo build --target wasm32-unknown-unknown --release
+    - name: Check formatting
+      working-directory: contracts
+      run: cargo fmt --all -- --check
+    - name: Run Clippy
+      working-directory: contracts
+      run: cargo clippy --workspace --all-targets --target x86_64-unknown-linux-gnu
+        -- -D warnings
+    - name: Report optimized WASM sizes
+      run: bash scripts/report-contract-wasm-size.sh
+    - name: Run unit tests
+      working-directory: contracts
+      run: cargo test --workspace --lib --target x86_64-unknown-linux-gnu
+    - name: Run invariant fuzz tests
+      working-directory: contracts
+      env:
+        PROPTEST_CASES: ${{ vars.PROPTEST_CASES || '256' }}
+      run: cargo test --workspace --tests --target x86_64-unknown-linux-gnu -- invariants
