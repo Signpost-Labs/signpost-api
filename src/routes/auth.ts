@@ -20,6 +20,7 @@ const authIpRateLimit = (endpoint: string) => rateLimit({
   name: `auth:${endpoint}:ip`,
   windowMs: config.authRateLimit.windowMs,
   max: config.authRateLimit.ipMax,
+  errorPolicy: config.authRateLimitErrorPolicy,
 });
 
 const authAccountRateLimit = (
@@ -30,6 +31,7 @@ const authAccountRateLimit = (
   windowMs: config.authRateLimit.windowMs,
   max: config.authRateLimit.max,
   keyGenerator,
+  errorPolicy: config.authRateLimitErrorPolicy,
 });
 
 function challengeAccountKey(req: Request): string | undefined {
