@@ -4,9 +4,12 @@
  * IMPORTANT: never include secret values in audit payloads. Only the secret
  * name, action, provider kind, and whether a value was found are recorded.
  *
- * Uses console directly to avoid a circular import with `logger` → `config`
- * → `secrets` → `logger`.
+ * NOTE: an earlier revision used console directly here to avoid a feared
+ * circular import (logger -> config -> secrets -> logger). Verified against
+ * the current tree: config.ts imports only dotenv, so no cycle exists and
+ * the structured logger is safe to use.
  */
+import { logger } from '../utils/logger';
 
 export type SecretsAuditAction = 'get' | 'refresh' | 'watch' | 'apply';
 
@@ -25,5 +28,5 @@ export function auditSecretAccess(event: SecretsAuditEvent): void {
     ...event,
     ts: new Date().toISOString(),
   };
-  console.info('[secrets-audit]', JSON.stringify(payload));
+  logger.info('[secrets-audit]', JSON.stringify(payload));
 }

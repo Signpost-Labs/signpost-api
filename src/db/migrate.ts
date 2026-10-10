@@ -5,6 +5,7 @@ import { DbDriver, DbTxHandle } from './driver';
 import { getMigrationFiles } from './migration-files';
 import { PostgresDriver } from './postgres-driver';
 import config from '../config';
+import { logger } from '../utils/logger';
 
 const MIGRATIONS_DIR = path.resolve(__dirname, '../../db');
 
@@ -166,7 +167,7 @@ async function ensureMigrationHistoryTable(driver: DbDriver, dryRun: boolean): P
   if (!dryRun) {
     await driver.exec(createTableSql);
   } else {
-    console.log('[DRY RUN] Would execute:', createTableSql);
+    logger.info('[DRY RUN] Would execute:', createTableSql);
   }
 }
 
@@ -235,7 +236,7 @@ async function processUpMigrations(
     // so it isn't retried on every future startup.
     if (dialectMismatch && getDialectCounterpart(filename, allFiles)) {
       if (dryRun) {
-        console.log('[DRY RUN] Would skip (dialect counterpart exists):', filename);
+        logger.info('[DRY RUN] Would skip (dialect counterpart exists):', filename);
         results.push({ filename, sql: '', applied: true });
         continue;
       }
@@ -254,8 +255,8 @@ async function processUpMigrations(
     }
 
     if (dryRun) {
-      console.log('[DRY RUN] Would apply migration:', filename);
-      console.log('[DRY RUN] SQL:', finalSql);
+      logger.info('[DRY RUN] Would apply migration:', filename);
+      logger.info('[DRY RUN] SQL:', finalSql);
 
       results.push({
         filename,
@@ -354,8 +355,8 @@ async function processDownMigrations(
     }
 
     if (dryRun) {
-      console.log('[DRY RUN] Would revert migration:', filename);
-      console.log('[DRY RUN] SQL:', finalSql);
+      logger.info('[DRY RUN] Would revert migration:', filename);
+      logger.info('[DRY RUN] SQL:', finalSql);
 
       results.push({
         filename: downFile,
