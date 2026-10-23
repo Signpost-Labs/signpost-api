@@ -139,7 +139,7 @@ jobs:
         id: set-url
         run: echo "url=${{ secrets.STAGING_URL }}" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
           name: staging-release
 
