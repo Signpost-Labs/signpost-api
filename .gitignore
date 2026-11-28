@@ -2,7 +2,6 @@ node_modules/
 dist/
 ci_log.txt
 job_log.txt
-.env
 *.js.map
 *.db
 *.db-wal
@@ -30,3 +29,4 @@ apiKeyScopes.txt
 branch_structure.json
 temp_auto_push.bat
 temp_interactive_push.bat
+config.bat
